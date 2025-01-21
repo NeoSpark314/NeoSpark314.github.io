@@ -1,0 +1,53 @@
+<html>
+  <head>
+	<script src="extern_js/dat.gui.min.js"></script>
+	<script src="extern_js/gl-matrix-min.js"></script>
+
+	<script src="scenes/box.js"></script>
+
+	<script src="mathUtils.js"></script>
+	<script src="bvh.js"></script>
+	<script src="pathTracer.js"></script>
+  </head>
+
+  <style type="text/css">
+	#renderdiv {
+	  float: left;
+	}
+
+	.guicontainer {
+	  float: left;
+	}
+
+	.guiblock {
+	  margin: 5px;
+	margin-bottom: 32px;
+	display: block;
+	}
+
+  </style>
+
+  <body onload="main();">
+	<h1>Triangle based path tracer in WebGL2 (WIP)</h1>
+
+	<!--<input type="file" id="objFileInput" name="file" accept=".obj">-->
+	<div class="guicontainer">
+	  <span class="guiblock" id="infoDiv">
+	  </span>
+
+	  <span class="guiblock" id="renderSettings">
+		Render Settings
+	  </span>
+
+	  <span class="guiblock" id="sceneSettings">
+		Scene Settings
+	  </span>
+	</div>
+
+	<div id="renderdiv">
+	  <canvas id="webglcanvas" width="512" height="512"></canvas>
+	</div>
+
+	
+  </body>
+</html>

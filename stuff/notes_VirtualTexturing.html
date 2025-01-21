@@ -1,0 +1,275 @@
+
+ 
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+ <title>Sparse Virtual Texturing</title>
+ <link href="/css/bootstrap.min.css" rel="stylesheet">
+ <link href="/css/bootstrap-responsive.min.css" rel="stylesheet">
+ <link href="/css/stuff_style.css" rel="stylesheet">
+
+
+ </head>
+ <body data-spy="scroll" data-target=".stuff-sidebar">
+
+   <div class="navbar navbar-fixed-top">
+     <div class="navbar-inner">
+       <a class="brand" href="/index.html">&nbsp;Holger Dammertz</a>
+       <ul class="nav">
+         <li class="active"><a href="#">Stuff</a></li>
+       </ul>
+     </div>
+   </div>
+  
+  
+   <!-- some space before the content starts -->
+   <header>
+      <div class="container">
+       <h1>&nbsp;</h1>
+     </div>
+   </header>
+  
+
+ <div class="container">
+
+   <div class="row">
+
+     <div class="span4 stuff-sidebar">
+
+
+       <div class="doc-toc">
+
+ FOLLOW ME!
+ <a href="http://mystictri.blogspot.de/">
+ <img class="toolTip" data-original-title="visit my Blog" src="/img/social_icons/blogger.png"></img></a>
+
+ <a href="https://plus.google.com/102229373367862368695">
+ <img class="toolTip" data-original-title="my Google+ profile" src="/img/social_icons/googleplus.png"></img></a>
+
+ <a href="https://twitter.com/NeoSpark314">
+ <img class="toolTip" data-original-title="my Twitter profile" src="/img/social_icons/twitter.png"></img></a>
+
+ <a href="http://www.linkedin.com/pub/holger-dammertz/8/955/9ba">
+ <img class="toolTip" data-original-title="visit me on LinkedIn" src="/img/social_icons/linkedin.png"></img></a>
+ <!--
+ <a href="http://www.youtube.com/user/NeoSpark314"><img src="/img/social_icons/youtube.png"></img></a>
+  -->
+ 
+ <br />
+ <br />
+Content
+<ul class="nav nav-list">
+    <li><a href="#sec-Overview"><i class="icon-chevron-right"></i> Overview</a></li>
+    <li><a href="#sec-Introduction"><i class="icon-chevron-right"></i> Introduction</a></li>
+    <li><a href="#sec-OtherWork"><i class="icon-chevron-right"></i> Other Work on Virtual Texturing</a></li>
+    <li><a href="#sec-TestData"><i class="icon-chevron-right"></i> Generating Test Data</a></li>
+    <li><a href="#sec-ChangeLog"><i class="icon-chevron-right"></i> Change Log</a></li>
+    <li><a href="#sec-References"><i class="icon-chevron-right"></i> References</a></li>
+</ul></div>
+
+      
+     </div>
+
+     <div class="span8">
+    
+       <h1>Sparse Virtual Texturing</h1>
+       2012
+       <p class="lead">Holger Dammertz</p>
+
+         Some personal notes I made during my demo implementation of Sparse Virtual Texturing using OpenGL.
+    
+       <section id="sec-Overview" title="Overview"><div class="page-header"><h2>1. Overview</h2></div>
+         <p>On this web-page you can find some personal notes made during programming a sparse virtual texturing demo in my spare time. The
+         demo was developed in C++ using OpenGL. The video below shows the current state.
+         My intend is to update (see the <a href="#sec-ChangeLog">&lt;Change Log&gt;</a>) this page from time to time when I try out new things regarding virtual texturing and also to have this page
+         as a resource of references to the many other works regarding virtual texturing (see Section <a href="#sec-OtherWork">&lt;Other Work on Virtual Texturing&gt;</a>)</p>
+        
+        <iframe width="640" height="360" src="http://www.youtube.com/embed/fIzGdc_KIK4" frameborder="0" allowfullscreen="allowfullscreen"></iframe>
+        <p>
+        <small>
+        Some details for the video above:<br>
+        Virtual Texture Resolution: 32256x32256 pixels<br>
+        Render Resolution: 960x540<br>
+        Features: Tri-Linear filtering, async tile loading, CPU readback for tile determination<br>
+        Tile Size: 128x128 (126 + 2 pixel border for filtering)<br>
+        Performance: ~1.6ms per frame on a GeForce 660Ti (no serious optimizations done so far)<br>
+        </small>
+        </p>
+       </section>
+
+
+       <section id="sec-Introduction" title="Introduction"><div class="page-header"><h2>2. Introduction</h2></div>
+       <p> Sparse virtual texturing is a technique that allows real time rendering of textures that are too large to fit into video memory.
+       This is achieved by only loading individual tiles of the texture that are needed for the current view into memory and keeping the rest on disc.
+       The name virtual refers to the technique of <a href="http://en.wikipedia.org/wiki/Virtual_memory">virtual memory</a> used in memory management systems of operating systems.
+       In its application it is basically an
+       <a href="http://en.wikipedia.org/wiki/Out-of-core_algorithm">out of core</a> technique for real time texture rendering. It's promises
+       are unique high resolution texture detail for large scenes in real time and this technique was made recently popular by the implementation
+       in the id-software game Rage. <!-- While out of core texturing techniques exist in almost any offline rendering system the application to real time
+       rendering resulted in several specific solution strategies that are by now summarized under the name Sparse virtual texturing. -->
+       </p>
+       </section>
+
+       <section id="sec-OtherWork" title="Other Work on Virtual Texturing"><div class="page-header"><h2>3. Other Work on Virtual Texturing</h2></div>
+         <p>The fundamental idea of virtual texturing is quite old and by now is
+         very well documented and researched in several different resources. The basic idea was described in a talk in 1999 by
+         Hall (3Dlabs) <a href="#hall99">[hall99]</a>.
+         Probably the first publicly available (software)
+         implementation was given by Sean Barret in 2008 <a href="#barret08">[barret08]</a> where he presented Sparse Virtual Textures at GDC
+         and much of the following work build on his presentation and implementation. Mittring gave a talk on Advanced Virtual Texturing
+         topics <a href="#mittring08">[mittring08]</a> at Siggraph 2008. In this talk he discusses among other things the precision problems regarding
+         tile access, how the indirection texture can be handled, mip-map generation and mesh parameterization for content generation.
+         
+         In a talk at Siggraph 2009 <a href="#waveren09">[waveren09]</a> van Waveren describes several details regarding their implementation
+         for the id Software title Rage. In 2010 he and Evan Hart gave a talk together at GTC on Virtual Texturing <a href="#waveren10">[waveren10]</a> where they talk
+         about some details of parallel variable bit rate decompression of texture tiles. </p>
+        
+         <p>
+         A very detailed resource on virtual texturing is the 2010 Master Thesis by Mayer <a href="#mayer10">[mayer10]</a> that summarizes
+         many aspects and gives several details on implementation challenges and solutions. Building partly on this work the Master
+         Thesis of Andersson and Göransson <a href="#andersson12">[andersson12]</a> presents and analyzes an implementation of virtual texturing in WebGL.
+         </p>
+        
+         <p>
+         An optimization using CUDA regarding tile determination on the GPU is presented in <a href="#hollemeersch10">[hollemeersch10]</a>. Their work could be directly adapted
+         for an implementation in OpenCL or in an OpenGL Compute shader.
+         </p>
+        
+         <p>
+         At GDC 2010 Sugden and Iwanicki presented a system <a href="#sugden11">[sugden11]</a> they called Mega Meshes. It is a full solution of content production tools and
+         rendering technology to build huge seamless worlds with a hierarchical geometry representation that can be streamed and unique texturing
+         on this geometry (+ some real time global illumination lighting). The texturing uses an implementation of Virtual Texturing and the talk gives several insights into practical problems
+         and solutions. They also discuss compression techniques for tiles of different channels (albedo, normal) in some detail.
+         </p>
+        
+         <p>
+         At Siggraph 2012 a course <a href="#sig12vtCourse">[sig12vtCourse]</a> was given. Besides a general introduction to virtual texturing
+         the course also contains a talk on the new AMD OpenGL extension of Partially Resident Textures
+         (<a href="http://www.opengl.org/registry/specs/AMD/sparse_texture.txt">AMD_sparse_texture</a>).
+         </p>
+        
+         <!--
+         <p>
+         There are several other publications that are relevant for sparse virtual texturing
+         </p>
+          -->
+        
+       </section>
+      
+       <section id="sec-TestData" title="Generating Test Data"><div class="page-header"><h2>4. Generating Test Data</h2></div>
+       <p>An interesting part of a demo implementation of virtual texturing is how to create reasonable test data without developing specific tools (and having access to artists who use them).
+       Available scenes are usually textured using classical mapping of many (often repeated) textures for the whole scene.
+       While it is possible to convert such scenes into a single large Virtual Texture as was for example done in the PC game
+       Brink (see the <a href="http://charles.hollemeersch.net/node/58">Blog entry by Hollemeersch</a>). These scenes are also
+       often designed so that all textures fit into GPU memory. Using a large height mapped terrain is not a very good option either
+       for testing a virtual texturing implementation because than the uv-mapping becomes trivial and using a clip-map would be
+       a better solution.
+       </p>
+       <p>
+       For my test I chose to create a simple uniquely textured scene by unwrapping a large mesh and baking a procedural
+       surface texture plus some simple lighting directly into the virtual texture using <a href="http://www.blender.org/">blender</a>.
+       Even though this approach is conceptually very simple the actual details are still a lot of work to get to acceptable quality.
+       I probably spend more time experimenting with automatic uv-unwrapping and light map baking artifacts than writing the
+       virtual texturing code.
+       </p>
+       <p>
+       These two images show the geometry of the scene and the UV-Layout used for the virtual texture. You can see many small and very small individual islands in the top and the right
+       of the UV-Layout. This results in some artifacts visible during rendering (and a lot of sub-optimal page requests) but was the best I could achieve so far with automatic unwrapping in blender for this scene. <br>
+      
+       <a href="https://picasaweb.google.com/lh/photo/X2M98VRC9sQv7ah-HOsh-U31RImM1bt3NTYCd4Yo5Ko?feat=embedwebsite"><img alt="GreenCave Scene Geometry" class="img-polaroid" src="https://lh4.googleusercontent.com/-i9OH6bKrA6c/UIuRyySVBYI/AAAAAAAAAeU/o_DCILIx76I/s400/scene_greencave_Geometry.png"></a>
+       <a href="https://picasaweb.google.com/lh/photo/L8Try4rZsIP-_KpVfea4XU31RImM1bt3NTYCd4Yo5Ko?feat=embedwebsite"><img alt="GreenCave Virtual Texture UV-Layout" class="img-polaroid" src="https://lh6.googleusercontent.com/-eHt5biR_Bto/UIuQGy679cI/AAAAAAAAAeM/TCRWSUA2yb8/s288/scene_greencave_UVLayout.png"></a>
+      
+       </p>
+       <p>
+       The most important/interesting steps I performed to create the test data
+       <ul>
+       <li> Created a UV-Layout for texturing and a second UV-Layout for baking into the virtual texture. For the
+       first UV-Layout all standard techniques can be used. Since I used a procedural 3D-Texture for most of the scene this layout is very simple.</li>
+       <li> Used a simple procedural texture that maps surfaces with an upward normal to a grass like green material and the rest to a
+            simple rock-like procedural textures.</li>
+       <li> The sign you see in the scene was taken from the blender game <a href="http://www.yofrankie.org/">YoFrankie!</a>. It uses
+       a classical texture map and uv-layout.</li>
+       <li> Wrote a python script that automates the baking process (and that splits the virtual texture into large 4k x 4k temporary tiles).
+       The splitting is necessary because directly allocating and baking to a 65k X 65k texture was not possible on my computer configuration. I also
+       decided to directly bake the lower mip-map resolution images instead of filtering the largest version because this avoids to write
+       a UV-mapping aware down-filtering processor.
+       <li> These 4k x 4k images are then split into the actual 128x128 tiles used during the rendering. The splitting is performed by another python script.
+       </ul>
+       The image below shows the baked virtual texture for the mip resolution of 1008 X 1008 pixels:<br>
+       <a href="https://picasaweb.google.com/lh/photo/rcfm44vXabq8rCERG4g1gE31RImM1bt3NTYCd4Yo5Ko?feat=embedwebsite"><img class="img-polaroid" src="https://lh5.googleusercontent.com/-jRTm7VHudY0/UIudnvQjSdI/AAAAAAAAAew/EMbSsMgZbI0/s288/scene_greencave_BakedVT_1008.png"></a>
+      
+       </p>
+       <p>
+       If you want to create the data on your own, you can <a href="https://dl.dropbox.com/u/6738543/data/scene_greencave.blend">
+       <i class="icon-download"></i>download the .blend file here</a> (tested with blender 2.64a). It contains the mesh, procedural
+       texture, and lighting setup and a python script that creates all the texture data.
+      
+       The script is set up to create the 64512x64512 pixel virtual texture (tiled to 4032x4032 pixels) at all mip-levels down to a single tile of 126x126 pixel.
+       The images are for a tile resolution of 128x128 (126 + 1 pixel border on all sides). The result are 346 4k .tga images with a total of 7.12GB.
+       All settings are hardcoded at the beginning of the script.
+       </p>
+       </section>
+
+       <section id="sec-ChangeLog" title="Change Log"><div class="page-header"><h2>5. Change Log</h2></div>
+         <ul>
+           <li>2012-10-29: Initial version of this document</li>
+         </ul>
+       </section>
+      
+      
+       <section id="sec-References" title="References"><div class="page-header"><h2>6. References</h2></div>
+      
+       <p><a name="barret08"></a>[barret08]&nbsp;&nbsp;<a href="http://silverspaceship.com/src/svt/">&nbsp;Sparse Virtual Textures</a>, Sean Barret, 2008</p>
+               
+       <p><a name="waveren09"></a>[waveren09]&nbsp;&nbsp;<a href="http://s09.idav.ucdavis.edu/talks/05-JP_id_Tech_5_Challenges.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;id Tech 5 Challenges - From Texture Virtualization to Massive Parallelization</a>, J.M.P. van Waveren, 2009</p>
+               
+       <p><a name="waveren10"></a>[waveren10]&nbsp;&nbsp;<a href="http://mrelusive.com/publications/presentations/2010_gtc/GTC_2010_Virtual_Textures.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Using Virtual Texturing to Handle Massive Texture Data</a>, J.M.P. van Waveren and Evan Hart, 2010, NVIDIA GTC 2010</p>
+               
+       <p><a name="hall99"></a>[hall99]&nbsp;&nbsp;<a href="http://www.graphicshardware.org/previous/www_1999/presentations/v-textures.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Virtual Textures - Texture Management in Silicon</a>, Chris Hall (3DLabs Inc.), 1999</p>
+      
+       <p><a name="mayer10"></a>[mayer10]&nbsp;&nbsp;<a href="http://www.cg.tuwien.ac.at/research/publications/2010/Mayer-2010-VT/">&nbsp;Virtual Texturing</a>, Albert Julian Mayer, 2010, Master's Thesis at Technische Universität Wien</p>
+               
+       <p><a name="sugden11"></a>[sugden11]&nbsp;&nbsp;<a href="http://miciwan.com/GDC2011/GDC2011_Mega_Meshes.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Mega Meshes</a>, Ben Sugden and Michal Iwanicki, 2011, GDC 2011</p>
+      
+       <p><a name="andersson12"></a>[andersson12]&nbsp;&nbsp;<a href="http://publications.lib.chalmers.se/records/fulltext/155126.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Virtual Texturing with WebGL</a>, Sven Andersson and Jhonny Göransson, 2012, Master's Thesis at Chalmers University of Technology</p>
+
+       <p><a name="hollemeersch10"></a>[hollemeersch10]&nbsp;&nbsp;<a href="http://aaronm.nuclearglory.com/vt/AcceleratingVirtualTexturingUsingCUDA-b10648-49.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Accelerating Virtual Texturing Using CUDA</a>, Charles-Frederik Hollemeersch, Bart Pieters, Peter Lambert, and Rik Van de Walle , 2010, GPU Pro: Advanced Rendering Techniques</p>
+               
+       <p><a name="sig12vtCourse"></a>[sig12vtCourse]&nbsp;&nbsp;<a href="http://mrelusive.com/publications/presentations/2012_siggraph/Virtual_Texturing_in_Software_and_Hardware_final.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Virtual texturing in software and hardware</a>, Juraj Obert, J.M.P. van Waveren, Graham Sellers, 2012, ACM SIGGRAPH 2012 Courses</p>
+               
+       <p><a name="mittring08"></a>[mittring08]&nbsp;&nbsp;<a href="http://developer.amd.com/Resources/documentation/presentations/legacy/Chapter02-Mittring-Advanced_Virtual_Texture_Topics.pdf"><img src="/img/pdficon_small.png" alt="pdf"/>&nbsp;Advanced Virtual Texture Topics</a>, Martin Mittring, 2008, ACM SIGGRAPH 2008 Courses, Advances in Real-Time Rendering in 3D Graphics and Games</p>
+      
+       </section>
+      
+     </div>
+
+   </div>
+ </div>
+
+
+ 
+
+    <footer class="footer">
+       <div class="container">
+         <p class="pull-right"><a href="#">Back to top</a></p>
+         <p>Written by <a href="http://holger.dammertz" target="_blank">Holger Dammertz</a></p>
+         <p>This document is licensed under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.
+            This page uses <a href="http://twitter.github.com/bootstrap/">Bootstrap</a>.</p>
+          <ul class="footer-links">
+           <li><a href="http://holger.dammertz.org">My HomePage</a></li>
+           <li><a href="http://mystictri.blogspot.de">My Blog</a></li>
+           <li><a href="http://twitter.com/NeoSpark314">My Twitter</a></li>
+         </ul>
+       </div>
+     </footer>
+     
+      <script src="http://code.jquery.com/jquery-latest.js"></script>
+      <script src="/js/bootstrap.min.js"></script>
+      <script>
+      $('.citeToolTip').popover({placement: 'top'})
+      $('.toolTip').tooltip()
+      </script>
+      <script src=""></script>
+      <script src=""></script>
+   </body>
+ </html>

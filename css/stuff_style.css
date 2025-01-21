@@ -1,0 +1,62 @@
+/* Extra styles for the stuff section of my homepage */
+
+.doc-toc {
+    position:fixed;
+}
+
+@media (max-width: 880px) {
+	.doc-toc {
+    	position:relative;
+	}
+}
+
+/* Stuff table */
+
+.stuff_table {
+  position: relative;
+  padding: 14px 14px 14px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  -webkit-border-radius: 4px;
+     -moz-border-radius: 4px;
+          border-radius: 4px;
+}
+
+/* 
+.stuff_table:after {
+  content: "Table";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #9da0a4;
+  -webkit-border-radius: 4px 0 4px 0;
+     -moz-border-radius: 4px 0 4px 0;
+          border-radius: 4px 0 4px 0;
+}
+*/
+
+
+/* Stuff footer */
+.footer {
+  padding: 16px 0;
+  margin-top: 16px;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f5f5f5;
+}
+.footer p {
+  margin-bottom: 0;
+  color: #777;
+}
+.footer-links {
+  margin: 10px 0;
+}
+.footer-links li {
+  display: inline;
+  margin-right: 10px;
+}
+
