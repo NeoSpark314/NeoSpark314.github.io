@@ -1,0 +1,310 @@
+<!DOCTYPE HTML>
+<!-- Samstag 03.05.2014 von Jasmin & Holger Dammertz waehrend Linas mittagsschlaf :-) -->
+<html>
+<head>
+<title>Jasmins Apfel Sammeln 03.05.2014</title>
+<style type="text/css">
+  body {
+  	background-color: #e8e8FF;
+  }
+  img {
+  	position:absolute;
+    //background-color: #d8da3d 
+  }
+</style>
+  
+</head>
+<body>
+
+<h1 id="appleCount">
+&Auml;pfel: 0; Gegessen: 0
+</h1>
+
+<img id="img_tree" src="images/tree.png" style="top:50px;left:100px;"/>
+<img id="img_tree" src="images/tree.png" style="top:10px;left:450px;"/>
+<img id="img_tree" src="images/tree.png" style="top:40px;left:840px;"/>
+
+<img id="img_jasminName" src="images/jasminName.png" style="top:10px;left:1100px;"/>
+
+
+<img id="img_grass1" src="images/grass.png" style="top:550px;"/>
+<img id="img_grass2" src="images/grass.png" style="top:550px;left:600px;"/>
+
+<div id="sheet_flower1" style="background-image: url(images/flower01sheet.png); position:absolute; width:80px; height:151px; top:470px; left:730px; overflow:hidden; ">
+</div>
+
+<img id="img_jasmin" src="images/jasmin.png" />
+<img id="img_basket" src="images/basket.png" />
+
+
+<img id="img_apple" src="images/apple.png" />
+
+<img id="img_throwapple" src="images/apple.png" />
+
+<img id="img_pferd" src="images/pferd.png" style="top:450px;left:1120px"/>
+
+
+
+</body>
+
+<script type="text/javascript">
+
+var jasminObj, basketObj, appleObj, appleCountHtml, pferdObj, gegessenCountHtml;
+
+var gameFieldWidth = 1400;
+var gameFieldHeight = 750;
+
+var appleCount = 0;
+var feedCount = 0;
+
+var audioContext, sndHamm, sndHallo;
+
+
+function playSound(buffer) {
+	if (!buffer) return;
+  var source = audioContext.createBufferSource();
+  source.buffer = buffer;                   
+  source.connect(audioContext.destination);      
+  source.start(0);                          
+}
+
+function loadSample(url, setVar, playIt) {
+  var request = new XMLHttpRequest();
+  request.open('GET', url, true);
+  request.responseType = 'arraybuffer';
+
+  // Decode asynchronously
+  request.onload = function() {
+    audioContext.decodeAudioData(request.response, function(buffer) {
+      setVar(buffer);
+      if (playIt) playSound(buffer);
+    });
+  }
+  request.send();
+}
+
+
+function initAudio() {
+	try {
+	    window.AudioContext = window.AudioContext||window.webkitAudioContext;
+    	audioContext = new AudioContext();
+    	
+    	loadSample("sound/hamm.ogg", function(buffer) {sndHamm = buffer;});
+    	loadSample("sound/hallo.ogg", function(buffer) {sndHallo = buffer;}, true);
+    	
+  } catch(e) {
+    alert('Web Audio API is not supported in this browser');
+  }
+}
+
+function initData() {
+	jasminObj = document.getElementById("img_jasmin");
+	pferdObj = document.getElementById("img_pferd");
+	basketObj = document.getElementById("img_basket");
+	appleObj = document.getElementById("img_apple");
+	throwAppleObj = document.getElementById("img_throwapple");
+	
+	flowerSheet1 = document.getElementById("sheet_flower1"); 
+	
+	appleCountHtml = document.getElementById("appleCount");
+	
+	flowerSheet1.update = function() {
+		var time = 50;
+		if (flowerSheet1.count) flowerSheet1.count = flowerSheet1.count + 1;
+		else flowerSheet1.count = 1;
+		
+		if (flowerSheet1.count == time) {
+			flowerSheet1.style.backgroundPosition = "0px 0px";
+			flowerSheet1.count = 1;
+		} else if ((flowerSheet1.count >= time/2) && (flowerSheet1.count <= (time/2)+1)) {
+			flowerSheet1.style.backgroundPosition = "80px 0px";
+		}
+	}
+
+	
+
+	jasminObj.gameData = {};
+	jasminObj.keys = {};
+	jasminObj.gameData.posX = 200;
+	jasminObj.gameData.posY = 440;
+	
+	
+	basketObj.gameData = {};
+		
+	jasminObj.update = function() {
+		if (jasminObj.keys.left) {
+			jasminObj.gameData.posX = jasminObj.gameData.posX - 8;
+			if (jasminObj.gameData.posX < 0) jasminObj.gameData.posX = 0;
+		} 
+		if (jasminObj.keys.right) {
+			jasminObj.gameData.posX = jasminObj.gameData.posX + 8;
+			if (jasminObj.gameData.posX > (gameFieldWidth-jasminObj.width)) jasminObj.gameData.posX = (gameFieldWidth-jasminObj.width);
+		} 
+		
+		jasminObj.style.left = jasminObj.gameData.posX + 'px';
+		
+		yOffset = Math.sin(jasminObj.gameData.posX/60.0)*8 + Math.sin(jasminObj.gameData.posX/33.0)*5 + Math.sin(jasminObj.gameData.posX/100.0)*4;
+		jasminObj.style.top = (jasminObj.gameData.posY+yOffset) + 'px';
+		
+		basketObj.gameData.posX = jasminObj.gameData.posX - 20; 
+		basketObj.gameData.posY = jasminObj.gameData.posY + 90; 
+		
+		yOffset2 = Math.sin(jasminObj.gameData.posX/30.0)*5;
+		basketObj.style.left = (basketObj.gameData.posX) + 'px';
+		basketObj.style.top = (basketObj.gameData.posY+yOffset+yOffset2) + 'px';
+	}
+	
+	jasminObj.overlapBasket = function(imgObj) {
+		if (imgObj.gameData.posX + imgObj.width > (basketObj.gameData.posX) &&
+			imgObj.gameData.posX < (basketObj.gameData.posX + basketObj.width) && 
+			imgObj.gameData.posY + imgObj.height > (basketObj.gameData.posY + basketObj.height/2) &&
+			imgObj.gameData.posY < (basketObj.gameData.posY + basketObj.height)) return true;
+		return false;
+	}
+	
+	throwAppleObj.gameData = {};
+	throwAppleObj.gameData.posX = -100;
+	throwAppleObj.gameData.posY = 0;
+	
+	function updateHtmlCount() {
+		appleCountHtml.innerHTML = "&Auml;pfel: " + appleCount + " Gegessen: " + feedCount;
+	}
+	
+	throwAppleObj.update = function() {
+    	if (jasminObj.keys.action && throwAppleObj.gameData.posX < 0 && appleCount > 0) {
+    		appleCount = appleCount - 1;
+    		updateHtmlCount();
+    		
+    		throwAppleObj.gameData.posX = jasminObj.gameData.posX + jasminObj.width - 40; 
+    		throwAppleObj.gameData.posY = jasminObj.gameData.posY + 90;
+    	} else if (throwAppleObj.gameData.posX > 0) {
+    		throwAppleObj.gameData.posX += 4;
+    		
+    		if (throwAppleObj.gameData.posX > 1200) {
+    			playSound(sndHamm);
+    			feedCount++;
+    			throwAppleObj.gameData.posX = -100; // move away
+    			updateHtmlCount();
+    		}
+    	}
+		throwAppleObj.style.left = (throwAppleObj.gameData.posX) + 'px';
+		throwAppleObj.style.top = (throwAppleObj.gameData.posY) + 'px';
+	}
+	
+	
+	appleObj.gameData = {};
+	appleObj.gameData.posX = 120;
+	appleObj.gameData.posY = 100;
+	
+	appleObj.update = function() {
+		var appleHeight = 120;
+		appleObj.gameData.posY = appleObj.gameData.posY + 2;
+		
+		
+		if (appleObj.gameData.posY > gameFieldHeight - appleHeight) { // outside; restart apple
+			appleObj.gameData.posY = gameFieldHeight - appleHeight;
+		}
+		
+		if (jasminObj.overlapBasket(appleObj)) {
+			appleObj.gameData.posX = 120 + Math.random() * (gameFieldWidth-400);
+			appleObj.gameData.posY = 100 + Math.random() * 80;
+			
+			appleCount = appleCount + 1;
+			updateHtmlCount();
+		}
+		
+		appleObj.style.left = (appleObj.gameData.posX) + 'px';
+		appleObj.style.top = (appleObj.gameData.posY) + 'px';
+	}
+	
+} // end init data
+
+function initEvents() {
+window.addEventListener('keydown', function() {
+	console.log(event.keyCode);
+    switch( event.keyCode ) {
+    case 32: // space
+    	jasminObj.keys.action = true;
+    	break;
+    case 188:
+    case 37: // left
+       jasminObj.keys.left = true;
+       break;
+    case 190:
+    case 39: // right
+       jasminObj.keys.right = true;
+       break;
+
+    }
+}, false);
+window.addEventListener('keyup', function() {
+	//console.log(event.keyCode);
+    switch( event.keyCode ) {
+    case 32: // space
+    	jasminObj.keys.action = false;
+    	break;
+    case 188:
+    case 37: // left
+       jasminObj.keys.left = false;
+       break;
+    case 190:
+    case 39: // right
+       jasminObj.keys.right = false;
+       break;
+
+    }
+}, false);
+
+
+window.addEventListener('touchstart', function(e) {
+  var touchobj = e.changedTouches[0] 
+  var startx = parseInt(touchobj.clientX)
+ 
+  if (startx < jasminObj.gameData.posX + jasminObj.width/2) {
+	   jasminObj.keys.left = true;
+       jasminObj.keys.right = false;
+  } else {
+	   jasminObj.keys.left = false;
+       jasminObj.keys.right = true;
+  }
+  
+  e.preventDefault()
+ }, false)
+ 
+
+window.addEventListener('touchend', function(e) {
+  var touchobj = e.changedTouches[0] // reference first touch point for this event
+  jasminObj.keys.left = false;
+  jasminObj.keys.right = false;
+  e.preventDefault()
+ }, false)
+ 
+ 
+
+ 
+} // end function initEvents
+
+function gameLoop() {
+  requestAnimationFrame(gameLoop);
+  jasminObj.update();
+  appleObj.update();
+  throwAppleObj.update();
+  flowerSheet1.update();
+}
+
+function main() {
+	initAudio();
+	initData();
+	initEvents();
+	
+
+	gameLoop();
+}
+
+window.onload = main;
+
+</script>
+
+</html>
+
+
