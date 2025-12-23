@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Down!</title>
+  <script type="module" crossorigin src="/assets/index-omemZhDs.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CpGwO3cF.css">
+</head>
+
+<body>
+    <div id="app">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-overlay">
+            <div id="game-ui" class="hidden">
+                <div id="hud">
+                    <span id="level-name">Level 0</span>
+                    <span id="steps-count">Steps: 0</span>
+                </div>
+                <div id="controls">
+                    <button id="undo-btn">Undo</button>
+                    <button id="reset-btn">Reset</button>
+                    <button id="sound-btn-in-game" class="icon-btn-small">🔊</button>
+                    <button id="exit-btn">Exit</button>
+                </div>
+            </div>
+
+            <div id="menu-overlay" class="hidden">
+                <h1 id="menu-title">Push Down!</h1>
+                <div class="menu-buttons">
+                    <button id="start-btn">Start Game</button>
+                    <button id="open-level-select-btn">Level Select</button>
+                </div>
+                <div id="menu-footer">
+                    <button id="info-btn" class="icon-btn" title="About">i</button>
+                    <button id="sound-btn" class="icon-btn" title="Toggle Sound">🔊</button>
+                </div>
+            </div>
+
+            <div id="version-display">v1.0.0</div>
+
+            <div id="info-overlay" class="hidden">
+                <div id="info-content" class="modal-content">
+                    <h2>About Push Down!</h2>
+                    <p>
+                        This is a web port of the puzzle game Push Down!<br><br>
+                        The original version of this game was developed for Android and released in 2010.
+                    </p>
+                    <button id="close-info-btn">Close</button>
+                </div>
+            </div>
+
+            <div id="level-select-overlay" class="hidden">
+                <div id="level-select-container">
+                    <h2>Select Level</h2>
+                    <div id="level-grid-container"></div>
+                    <button id="close-level-select-btn">Back</button>
+                </div>
+            </div>
+
+            <div id="win-overlay" class="hidden">
+                <div id="win-content" class="modal-content">
+                    <h1>Level Clear!</h1>
+                    <div id="win-stars" class="stars-large">
+                        <span class="star-large">★</span>
+                        <span class="star-large">★</span>
+                        <span class="star-large">★</span>
+                    </div>
+                    <p id="win-stats">Steps: 0</p>
+                    <div class="menu-buttons">
+                        <button id="next-level-btn">Next Level</button>
+                        <button id="replay-btn">Replay</button>
+                        <button id="win-exit-btn">Menu</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
