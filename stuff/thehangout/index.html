@@ -7,11 +7,11 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <link rel="icon" type="image/svg+xml" href="./th-logo.svg" />
   <title>THE HANGOUT</title>
-  <script type="module" crossorigin src="./assets/index-DB_eSUAe.js"></script>
+  <script type="module" crossorigin src="./assets/index-D2lG9jwJ.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/peerjs-D_BJpyng.js">
   <link rel="modulepreload" crossorigin href="./assets/rapier-CKC5f6tm.js">
   <link rel="modulepreload" crossorigin href="./assets/three-Cfp_b2uh.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-qIkg2w7X.css">
+  <link rel="stylesheet" crossorigin href="./assets/index-lVZcPDWh.css">
 </head>
 
 <body>
@@ -90,7 +90,11 @@
   </div>
 
   <!-- Mobile HUD (Joysticks) -->
+  <button id="mobile-menu-btn" style="display: none;" aria-label="Toggle menu">Menu</button>
   <div id="mobile-hud" style="display: none;">
+    <div id="mobile-reticle" aria-hidden="true"></div>
+    <button id="mobile-action-btn" style="display: none;" aria-label="Primary action">Grab</button>
+    <button id="mobile-interact-btn" style="display: none;" aria-label="Secondary action">Use</button>
     <div id="joystick-left" class="joy-container"></div>
     <div id="joystick-right" class="joy-container"></div>
   </div>
