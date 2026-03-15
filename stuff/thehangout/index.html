@@ -7,47 +7,39 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <link rel="icon" type="image/svg+xml" href="./th-logo.svg" />
   <title>THE HANGOUT</title>
-  <script type="module" crossorigin src="./assets/index-D2lG9jwJ.js"></script>
+  <script type="module" crossorigin src="./assets/index-CnU4l2tW.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/peerjs-D_BJpyng.js">
   <link rel="modulepreload" crossorigin href="./assets/rapier-CKC5f6tm.js">
-  <link rel="modulepreload" crossorigin href="./assets/three-Cfp_b2uh.js">
-  <link rel="stylesheet" crossorigin href="./assets/index-lVZcPDWh.css">
+  <link rel="modulepreload" crossorigin href="./assets/three-C_mI8IRZ.js">
+  <link rel="stylesheet" crossorigin href="./assets/index-Xm-EJGyB.css">
 </head>
 
 <body>
   <div id="app">
-    <div id="desktop-controls" class="version-info top-left" style="display: none;">
-      <b>Controls</b><br>
-      Menu: M<br>
-      Move: WASD<br>
-      Look: Mouse<br>
-      Extend Hands: Q (L), E (R)<br>
-      Hand Grab: Left Click<br>
-      Hand Interact: Right Click<br>
-      Reach: Mouse Wheel
-    </div>
+    <div id="desktop-controls" class="version-info top-left is-hidden"></div>
   </div>
 
   <!-- UI Overlay -->
   <div id="ui-overlay" class="overlay">
-    <div class="panel">
+    <div id="main-panel" class="panel panel-hydrating">
       <h1>🎮 THE HANGOUT</h1>
       <p>Komm in die Cyber-Stube und Häng ab!</p>
 
       <div class="input-group">
         <label for="player-name">Name:</label>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="player-name" placeholder="Enter your name" style="flex: 1;" />
+        <div class="inline-row">
+          <input type="text" id="player-name" class="grow" placeholder="Enter your name" />
           <button id="avatar-btn" class="icon-btn" title="Customize Avatar">👤</button>
+          <button id="extensions-btn" class="icon-btn" title="Extensions / Settings">⚙️</button>
         </div>
       </div>
 
       <div class="input-group">
-        <label for="room-id">Room Name:</label>
-        <div class="action-stack" id="room-controls">
+        <label for="session-id">Session Name:</label>
+        <div class="action-stack" id="session-controls">
           <div class="input-with-icon">
-            <input type="text" id="room-id" placeholder="TestRoom" />
-            <button id="copy-room-btn" class="icon-btn" title="Copy Room Link">📋</button>
+            <input type="text" id="session-id" placeholder="DefaultMeetingSession" />
+            <button id="copy-session-btn" class="icon-btn" title="Copy Session Link">📋</button>
           </div>
           <div id="network-mode" class="network-mode-badge"></div>
           <div class="action-row">
@@ -58,7 +50,7 @@
       </div>
 
       <div class="input-group">
-        <button id="voice-btn" class="primary-btn secondary-style">Enable Voice Chat</button>
+        <button id="voice-btn" class="primary-btn secondary-style">Auto Mic: On</button>
       </div>
 
 
@@ -67,20 +59,24 @@
       <div id="error-text" class="error-msg"></div>
 
       <!-- Avatar Customization Modal -->
-      <div id="avatar-dialog" class="modal-overlay" style="display: none;">
+      <div id="avatar-dialog" class="modal-overlay is-hidden">
         <div class="modal-content">
-          <h2>CUSTOMIZE AVATAR</h2>
+          <h2>Customize Avatar</h2>
           <div class="input-group">
-            <label for="avatar-color">GLOW COLOR</label>
-            <input type="color" id="avatar-color" value="#00ffff">
+            <label for="avatar-color">Glow Color</label>
+            <input type="color" id="avatar-color">
           </div>
-          <div class="input-group" id="avatar-screens-group">
-            <label>MY SCREENS</label>
-            <div id="my-screens-list" class="screens-list"></div>
-            <button id="add-screen-btn" class="primary-btn secondary-style" type="button">Add Screen</button>
-          </div>
-          <button id="close-avatar-btn" class="primary-btn">DONE</button>
+          <button id="close-avatar-btn" class="primary-btn">Done</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Extension Settings Modal -->
+    <div id="extensions-dialog" class="modal-overlay is-hidden">
+      <div class="modal-content" style="max-height: 80vh; overflow-y: auto;">
+        <h2>Extension Settings</h2>
+        <div id="extensions-container" class="settings-container"></div>
+        <button id="close-extensions-btn" class="primary-btn">Done</button>
       </div>
     </div>
 
@@ -90,11 +86,11 @@
   </div>
 
   <!-- Mobile HUD (Joysticks) -->
-  <button id="mobile-menu-btn" style="display: none;" aria-label="Toggle menu">Menu</button>
-  <div id="mobile-hud" style="display: none;">
+  <button id="mobile-menu-btn" class="is-hidden" aria-label="Toggle menu">Menu</button>
+  <div id="mobile-hud" class="is-hidden">
     <div id="mobile-reticle" aria-hidden="true"></div>
-    <button id="mobile-action-btn" style="display: none;" aria-label="Primary action">Grab</button>
-    <button id="mobile-interact-btn" style="display: none;" aria-label="Secondary action">Use</button>
+    <button id="mobile-action-btn" class="is-hidden" aria-label="Primary action">Grab</button>
+    <button id="mobile-interact-btn" class="is-hidden" aria-label="Secondary action">Use</button>
     <div id="joystick-left" class="joy-container"></div>
     <div id="joystick-right" class="joy-container"></div>
   </div>
