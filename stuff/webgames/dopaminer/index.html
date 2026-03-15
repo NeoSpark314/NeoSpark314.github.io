@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="Dopa Miner score attack mode" />
+  <title>Dopa Miner</title>
+  <script type="module" crossorigin src="./assets/index-BXRkGU7r.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-MBlML6Hk.css">
+</head>
+
+<body>
+  <div id="app-wrapper">
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="multiplier-burst" aria-hidden="true"></div>
+      <div id="hud">
+        <div id="hud-score-card" class="hud-card">
+          <span id="hud-score-anchor" aria-hidden="true"></span>
+          <span class="hud-label">PTS</span>
+          <span id="hud-score" class="hud-value">0</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label">MULT</span>
+          <span id="hud-multiplier" class="hud-value">1.0x</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-label">DEPTH</span>
+          <span id="hud-depth" class="hud-value">0m</span>
+        </div>
+        <div class="hud-card hud-wide">
+          <span id="hud-heat" class="hud-value">SHAFT</span>
+          <span id="hud-drill" class="hud-chip">DRILL</span>
+        </div>
+      </div>
+      <div id="controls">
+        <button id="btn-left" class="ctrl-btn">LEFT</button>
+        <button id="btn-down" class="ctrl-btn btn-down">DOWN</button>
+        <button id="btn-right" class="ctrl-btn">RIGHT</button>
+      </div>
+    </div>
+
+    <div id="title-screen" class="overlay">
+      <div class="title-content">
+        <h1 class="game-title">DOPA<br><span class="title-accent">MINER</span></h1>
+        <p class="title-subtitle">Dig. Get rich.</p>
+        <p id="title-best" class="title-best">BEST 0  DEPTH 0m</p>
+        <button id="btn-play" class="menu-btn">PLAY</button>
+      </div>
+      <span class="screen-version">v1.0.0</span>
+    </div>
+
+    <div id="gameover-screen" class="overlay" style="display:none;">
+      <div class="title-content gameover-content">
+        <p class="title-kicker">RUN LOST</p>
+        <p id="gameover-new-best" class="new-best-badge" style="display:none;">NEW HIGHSCORE</p>
+        <h1 class="gameover-title">GAME OVER</h1>
+        <div class="results-grid">
+          <div class="result-card">
+            <span class="result-label">PTS</span>
+            <span id="final-score" class="result-value">0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">DEPTH</span>
+            <span id="final-depth" class="result-value">0m</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">BEST</span>
+            <span id="best-score" class="result-value">0</span>
+          </div>
+          <div class="result-card">
+            <span class="result-label">BEST DEPTH</span>
+            <span id="best-depth" class="result-value">0m</span>
+          </div>
+        </div>
+        <button id="btn-restart" class="menu-btn">RETRY</button>
+        <button id="btn-go-menu" class="menu-btn menu-btn-secondary">MENU</button>
+      </div>
+    </div>
+
+    <button id="btn-fullscreen" title="Toggle Fullscreen">FULL</button>
+  </div>
+
+</body>
+
+</html>
