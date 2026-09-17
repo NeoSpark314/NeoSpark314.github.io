@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Realm Sentinel &bull; Wake-on-LAN</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-base: #0a0d14;
+      --bg-card: rgba(18, 24, 38, 0.75);
+      --bg-card-hover: rgba(24, 32, 50, 0.85);
+      --border-magic: rgba(180, 150, 90, 0.28);
+      --border-glow: rgba(212, 175, 55, 0.45);
+      
+      --gold-primary: #e6ca65;
+      --gold-light: #f7e7a9;
+      --gold-dark: #a17c2f;
+      
+      --mana-cyan: #38ef7d;
+      --mana-glow: rgba(56, 239, 125, 0.35);
+      --online-emerald: #10b981;
+      --online-glow: rgba(16, 185, 129, 0.4);
+      
+      --dormant-ruby: #f43f5e;
+      --dormant-glow: rgba(244, 63, 94, 0.3);
+      --dormant-slate: #64748b;
+      
+      --arcane-purple: #a855f7;
+      --arcane-blue: #3b82f6;
+
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-gold: #f5d485;
+      
+      --font-fantasy: 'Cinzel', serif;
+      --font-body: 'Outfit', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 50% 15%, rgba(40, 55, 95, 0.4) 0%, transparent 60%),
+        radial-gradient(circle at 10% 80%, rgba(26, 36, 62, 0.3) 0%, transparent 45%),
+        radial-gradient(circle at 90% 85%, rgba(60, 30, 80, 0.25) 0%, transparent 45%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.015' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient mystical dust particles */
+    .mystic-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(5, 7, 12, 0.6) 100%);
+      z-index: 1;
+    }
+
+    /* Main Container Card */
+    .sentinel-card {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-magic);
+      border-radius: 20px;
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(212, 175, 55, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 36px 32px;
+      text-align: center;
+      transition: all 0.4s ease;
+    }
+
+    /* Runic Corner Ornaments */
+    .runic-corner {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .corner-tl { top: 12px; left: 12px; border-top: 2px solid var(--gold-primary); border-left: 2px solid var(--gold-primary); }
+    .corner-tr { top: 12px; right: 12px; border-top: 2px solid var(--gold-primary); border-right: 2px solid var(--gold-primary); }
+    .corner-bl { bottom: 12px; left: 12px; border-bottom: 2px solid var(--gold-primary); border-left: 2px solid var(--gold-primary); }
+    .corner-br { bottom: 12px; right: 12px; border-bottom: 2px solid var(--gold-primary); border-right: 2px solid var(--gold-primary); }
+
+    /* Top Bar */
+    .card-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .realm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 999px;
+      font-family: var(--font-fantasy);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gold-light);
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .icon-btn:hover {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: var(--gold-primary);
+      color: var(--gold-light);
+      transform: translateY(-1px);
+    }
+
+    /* Title & Host */
+    .title-wrapper {
+      margin-bottom: 28px;
+    }
+
+    .realm-title {
+      font-family: var(--font-fantasy);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #ffffff 30%, var(--gold-light) 75%, var(--gold-primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .host-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .host-pill:hover {
+      border-color: var(--gold-primary);
+      color: var(--gold-light);
+      background: rgba(212, 175, 55, 0.08);
+    }
+    .host-pill svg {
+      opacity: 0.7;
+    }
+
+    /* Arcane Orb & Ring */
+    .orb-stage {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      margin: 0 auto 30px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .runic-ring {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(212, 175, 55, 0.35);
+      animation: rotateRune 24s linear infinite;
+      pointer-events: none;
+    }
+
+    .runic-ring-inner {
+      position: absolute;
+      top: 10px; left: 10px; right: 10px; bottom: 10px;
+      border-radius: 50%;
+      border: 1px dotted rgba(212, 175, 55, 0.2);
+      animation: rotateRuneRev 16s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotateRune {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes rotateRuneRev {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+
+    .arcane-orb {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.5s ease;
+      cursor: pointer;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.7);
+    }
+
+    /* State: Online */
+    .orb-stage.online .arcane-orb {
+      background: radial-gradient(circle at 35% 30%, #a7f3d0 0%, #10b981 50%, #064e3b 100%);
+      box-shadow: 
+        0 0 35px var(--online-glow),
+        inset 0 2px 6px rgba(255, 255, 255, 0.6),
+        inset 0 -4px 10px rgba(0, 0, 0, 0.6);
+      animation: breatheOnline 4s ease-in-out infinite;
+    }
+    .orb-stage.online .runic-ring {
+      border-color: rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+    }
+
+    /* State: Offline */
+    .orb-stage.offline .arcane-orb {
+      background: radial-gradient(circle at 35% 30%, #475569 0%, #1e293b 50%, #0f172a 100%);
+      box-shadow: 
+        0 0 20px rgba(15, 23, 42, 0.8),
+        inset 0 1px 3px rgba(255, 255, 255, 0.1),
+        inset 0 -4px 10px rgba(0, 0, 0, 0.8);
+    }
+    .orb-stage.offline .runic-ring {
+      border-color: rgba(100, 116, 139, 0.25);
+    }
+
+    /* State: Awakening / Checking */
+    .orb-stage.awakening .arcane-orb {
+      background: radial-gradient(circle at 35% 30%, #fed7aa 0%, #f59e0b 50%, #9a3412 100%);
+      box-shadow: 
+        0 0 40px rgba(245, 158, 11, 0.6),
+        inset 0 2px 8px rgba(255, 255, 255, 0.7);
+      animation: pulseAwakening 1.2s ease-in-out infinite alternate;
+    }
+    .orb-stage.awakening .runic-ring {
+      border-color: rgba(245, 158, 11, 0.6);
+      animation: rotateRune 3s linear infinite;
+    }
+
+    @keyframes breatheOnline {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.4)); }
+      50% { transform: scale(1.03); filter: drop-shadow(0 0 22px rgba(16, 185, 129, 0.7)); }
+    }
+    @keyframes pulseAwakening {
+      0% { transform: scale(0.97); filter: brightness(0.9); }
+      100% { transform: scale(1.06); filter: brightness(1.25); }
+    }
+
+    .orb-icon {
+      font-size: 38px;
+      user-select: none;
+      filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
+    }
+
+    /* Status Text and Details */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-fantasy);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+    .status-badge.online {
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+    }
+    .status-badge.offline {
+      background: rgba(100, 116, 139, 0.15);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+      color: #cbd5e1;
+    }
+    .status-badge.awakening {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .online .status-dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .offline .status-dot { background: #64748b; }
+    .awakening .status-dot { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+
+    /* Telemetry Grid (Players, Ping, Version) */
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .telemetry-item {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 12px 8px;
+    }
+    .telemetry-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+    .telemetry-value {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-gold);
+    }
+
+    /* Motd banner */
+    .motd-card {
+      background: rgba(212, 175, 55, 0.04);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 28px;
+      font-size: 13px;
+      color: #e2e8f0;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Enchanted Action Buttons */
+    .action-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .btn-wake {
+      position: relative;
+      background: linear-gradient(135deg, #d97706 0%, #b45309 60%, #78350f 100%);
+      border: 1px solid rgba(251, 191, 36, 0.5);
+      color: #fffbeb;
+      font-family: var(--font-fantasy);
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 15px 24px;
+      border-radius: 14px;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 
+        0 8px 24px rgba(180, 83, 9, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-wake:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 12px 30px rgba(217, 119, 6, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+      border-color: var(--gold-light);
+    }
+    .btn-wake:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn-wake:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+    }
+
+    /* Subtle shimmer across the wake button */
+    .btn-wake::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        60deg,
+        transparent,
+        rgba(255, 255, 255, 0.15),
+        transparent
+      );
+      transform: rotate(30deg);
+      animation: buttonShimmer 5s infinite;
+    }
+    @keyframes buttonShimmer {
+      0% { transform: translateX(-100%) rotate(30deg); }
+      20%, 100% { transform: translateX(100%) rotate(30deg); }
+    }
+
+    .btn-secondary-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-ghost {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Last check footer */
+    .card-footer {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .auto-refresh-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .auto-refresh-toggle input {
+      accent-color: var(--gold-primary);
+      cursor: pointer;
+    }
+
+    /* Modal / Drawer for Arcane Settings & Lore */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(5, 7, 13, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #0f1523;
+      border: 1px solid var(--border-magic);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.1);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 540px;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 28px;
+      position: relative;
+      color: #cbd5e1;
+    }
+
+    .modal-title {
+      font-family: var(--font-fantasy);
+      font-size: 20px;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+    }
+    .form-hint {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+    }
+
+    /* Grimoire Accordion */
+    .lore-box {
+      margin-top: 20px;
+      background: rgba(212, 175, 55, 0.04);
+      border: 1px solid rgba(212, 175, 55, 0.15);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: left;
+    }
+    .lore-box h4 {
+      font-family: var(--font-fantasy);
+      font-size: 14px;
+      color: var(--gold-light);
+      margin-bottom: 8px;
+    }
+    .lore-box p {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+    .lore-box p:last-child {
+      margin-bottom: 0;
+    }
+    .lore-box code {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--gold-light);
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    /* Toast Notification */
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      background: #1e293b;
+      border: 1px solid var(--border-glow);
+      color: var(--gold-light);
+      font-family: var(--font-body);
+      font-size: 13px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .sentinel-card {
+        padding: 28px 20px;
+      }
+      .realm-title {
+        font-size: 22px;
+      }
+      .telemetry-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mystic-overlay"></div>
+
+  <main class="sentinel-card">
+    <!-- Runic Corner Embellishments -->
+    <div class="runic-corner corner-tl"></div>
+    <div class="runic-corner corner-tr"></div>
+    <div class="runic-corner corner-bl"></div>
+    <div class="runic-corner corner-br"></div>
+
+    <!-- Card Top Header -->
+    <header class="card-topbar">
+      <span class="realm-badge">✦ Sentinel Guardian ✦</span>
+      <div class="top-actions">
+        <button id="btnSettings" class="icon-btn" title="Arcane Configuration & Lore" aria-label="Settings">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Realm Title & Host Address -->
+    <div class="title-wrapper">
+      <h1 class="realm-title">Chrismos Realm</h1>
+      <div id="hostPill" class="host-pill" title="Click to copy host address">
+        <span id="displayHost">chrismos.viewdns.net</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Arcane Orb Indicator -->
+    <div id="orbStage" class="orb-stage awakening">
+      <div class="runic-ring"></div>
+      <div class="runic-ring-inner"></div>
+      <div class="arcane-orb" id="orbBtn" title="Click to divine server status">
+        <span id="orbIcon" class="orb-icon">🔮</span>
+      </div>
+    </div>
+
+    <!-- Status Text Pill -->
+    <div>
+      <div id="statusBadge" class="status-badge awakening">
+        <span class="status-dot"></span>
+        <span id="statusText">Divining Realm...</span>
+      </div>
+    </div>
+
+    <!-- MOTD / Message of the Day -->
+    <div id="motdCard" class="motdCard motd-card" style="display: none;">
+      <span>✨</span>
+      <span id="motdText">Awakening resonance...</span>
+    </div>
+
+    <!-- Telemetry Stats -->
+    <div class="telemetry-grid">
+      <div class="telemetry-item">
+        <div class="telemetry-label">Status</div>
+        <div id="statState" class="telemetry-value">Checking</div>
+      </div>
+      <div class="telemetry-item">
+        <div class="telemetry-label">Latency / Ping</div>
+        <div id="statPing" class="telemetry-value">-- ms</div>
+      </div>
+      <div class="telemetry-item">
+        <div class="telemetry-label">Adventurers</div>
+        <div id="statPlayers" class="telemetry-value">-- / --</div>
+      </div>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="action-container">
+      <button id="btnWake" class="btn-wake">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span id="btnWakeText">Awaken Realm</span>
+      </button>
+
+      <div class="btn-secondary-row">
+        <button id="btnRefresh" class="btn-ghost" title="Re-check status immediately">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+          </svg>
+          Divine Status
+        </button>
+        <button id="btnDetails" class="btn-ghost" title="View Arcane Knowledge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          How Wake Works
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="card-footer">
+      <span id="lastChecked">Last divined: Just now</span>
+      <label class="auto-refresh-toggle">
+        <input type="checkbox" id="chkAutoRefresh" checked>
+        <span>Auto-pulse (30s)</span>
+      </label>
+    </footer>
+  </main>
+
+  <!-- Configuration & Lore Modal -->
+  <div id="configModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span>⚙️</span> Arcane Configuration
+      </div>
+      <p class="modal-subtitle">Customize realm telemetry, Wake-on-LAN relays, and triggers.</p>
+
+      <div class="form-group">
+        <label class="form-label" for="inputHost">Server Hostname</label>
+        <input id="inputHost" class="form-input" type="text" value="chrismos.viewdns.net" placeholder="chrismos.viewdns.net" />
+        <p class="form-hint">Dynamic DNS hostname or public/LAN IP of your host.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="inputPort">Minecraft Port</label>
+        <input id="inputPort" class="form-input" type="number" value="25565" placeholder="25565" />
+        <p class="form-hint">Default Minecraft server port (used by AMP and server ping probes).</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="selectWakeMode">Awakening Method</label>
+        <select id="selectWakeMode" class="form-select">
+          <option value="minecraft">Minecraft Handshake Probe (AMP / Sleep Proxy Auto-Wake)</option>
+          <option value="webhook">Custom Webhook / WoL Relay (HTTP Endpoint)</option>
+        </select>
+        <p class="form-hint" id="modeHint">Pings the Minecraft server list to invoke AMP or sleep proxy auto-wake.</p>
+      </div>
+
+      <div id="webhookSection" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="inputWebhookUrl">WoL Relay Webhook URL</label>
+          <input id="inputWebhookUrl" class="form-input" type="url" placeholder="http://192.168.1.100:8080/wake or Home Assistant URL" />
+          <p class="form-hint">URL of a local router, Home Assistant, or small bridge script on your LAN that dispatches the raw UDP magic packet.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inputMac">Server MAC Address (Optional)</label>
+          <input id="inputMac" class="form-input" type="text" placeholder="AA:BB:CC:DD:EE:FF" />
+          <p class="form-hint">Physical network card MAC address of your target server.</p>
+        </div>
+      </div>
+
+      <!-- Grimoire / Architectural Lore -->
+      <div class="lore-box">
+        <h4>📜 Grimoire of Awakening: Crucial Details</h4>
+        <p><strong>1. Why web browsers can't send raw UDP WoL packets:</strong><br>
+        Web browsers are strictly sandboxed and cannot transmit raw Layer 2 UDP broadcast packets (port 9) over a local network or WAN.</p>
+        
+        <p><strong>2. Why wake already works for Minecraft:</strong><br>
+        Your server is reported as <code>Powered by AMP</code> (CubeCoders AMP). AMP has an <em>Application Sleep</em> feature: when players disconnect, the heavy server hibernates and AMP listens on port 25565. As soon as a client pings or connects, AMP awakens the game! Clicking "Awaken Realm" sends immediate Minecraft Server List Ping (SLP) probes to trigger this.</p>
+
+        <p><strong>3. If the host PC is completely powered off (ACPI S5):</strong><br>
+        If the entire physical computer is shut down, standard routers drop broadcast packets from the Internet. You will need either:
+        • A port forward on your router directing UDP port 9 to your broadcast IP (or ARP binding), or<br>
+        • A tiny WoL bridge script (or Home Assistant/router) inside the LAN.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btnSaveConfig" class="btn-wake" style="padding: 10px 20px; font-size: 14px;">Save Grimoire</button>
+        <button id="btnCloseConfig" class="btn-ghost" style="flex: initial;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast" class="toast-msg">
+    <span id="toastIcon">✨</span>
+    <span id="toastMsg">Realm address copied to scroll!</span>
+  </div>
+
+  <script>
+    // --- Arcane Configuration & State ---
+    const DEFAULTS = {
+      host: 'chrismos.viewdns.net',
+      port: 25565,
+      wakeMode: 'minecraft', // 'minecraft' or 'webhook'
+      webhookUrl: '',
+      mac: '',
+      autoRefresh: true
+    };
+
+    let config = { ...DEFAULTS };
+    try {
+      const saved = localStorage.getItem('sentinel_config');
+      if (saved) config = { ...config, ...JSON.parse(saved) };
+    } catch (e) {
+      console.warn('Could not read config from localStorage', e);
+    }
+
+    let isChecking = false;
+    let isAwakening = false;
+    let autoRefreshTimer = null;
+    let serverIsOnline = false;
+
+    // Elements
+    const orbStage = document.getElementById('orbStage');
+    const orbIcon = document.getElementById('orbIcon');
+    const orbBtn = document.getElementById('orbBtn');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    const motdCard = document.getElementById('motdCard');
+    const motdText = document.getElementById('motdText');
+    const statState = document.getElementById('statState');
+    const statPing = document.getElementById('statPing');
+    const statPlayers = document.getElementById('statPlayers');
+    const displayHost = document.getElementById('displayHost');
+    const hostPill = document.getElementById('hostPill');
+    const btnWake = document.getElementById('btnWake');
+    const btnWakeText = document.getElementById('btnWakeText');
+    const btnRefresh = document.getElementById('btnRefresh');
+    const btnDetails = document.getElementById('btnDetails');
+    const btnSettings = document.getElementById('btnSettings');
+    const lastChecked = document.getElementById('lastChecked');
+    const chkAutoRefresh = document.getElementById('chkAutoRefresh');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
+
+    // Modal elements
+    const configModal = document.getElementById('configModal');
+    const btnCloseConfig = document.getElementById('btnCloseConfig');
+    const btnSaveConfig = document.getElementById('btnSaveConfig');
+    const inputHost = document.getElementById('inputHost');
+    const inputPort = document.getElementById('inputPort');
+    const selectWakeMode = document.getElementById('selectWakeMode');
+    const webhookSection = document.getElementById('webhookSection');
+    const inputWebhookUrl = document.getElementById('inputWebhookUrl');
+    const inputMac = document.getElementById('inputMac');
+    const modeHint = document.getElementById('modeHint');
+
+    // Arcane Audio Chime (Web Audio API Synthesizer - 0 external files!)
+    function playArcaneSound(type = 'chime') {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+
+        if (type === 'awake') {
+          // Ascending magical major triad
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.1);
+            gain.gain.setValueAtTime(0.08, ctx.currentTime + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.1 + 0.7);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * 0.1);
+            osc.stop(ctx.currentTime + idx * 0.1 + 0.8);
+          });
+        } else if (type === 'spell') {
+          // Arcane sweep
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(260, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(780, ctx.currentTime + 0.4);
+          gain.gain.setValueAtTime(0.06, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.5);
+        }
+      } catch (e) {
+        // Audio policy or unsupported
+      }
+    }
+
+    function showToast(message, icon = '✨') {
+      document.getElementById('toastIcon').textContent = icon;
+      toastMsg.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    // --- Status Checker ---
+    async function checkServerStatus(manual = false) {
+      if (isChecking && !manual) return;
+      isChecking = true;
+
+      if (!isAwakening) {
+        setCheckingVisuals();
+      }
+
+      const host = config.host || 'chrismos.viewdns.net';
+      const port = config.port || 25565;
+      const cacheBust = Date.now();
+
+      // Primary: minetools ping (fast, accurate latency, clean CORS)
+      // Secondary: mcsrvstat API fallback
+      let data = null;
+      let latencyMs = null;
+
+      try {
+        const startTime = performance.now();
+        const res = await fetch(`https://api.minetools.eu/ping/${encodeURIComponent(host)}/${encodeURIComponent(port)}?_t=${cacheBust}`, {
+          cache: 'no-store'
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (!json.error) {
+            data = {
+              online: true,
+              players: json.players ? { online: json.players.online, max: json.players.max } : null,
+              latency: json.latency ? Math.round(json.latency) : Math.round(performance.now() - startTime),
+              motd: json.description || 'Powered by AMP',
+              version: json.version ? json.version.name : 'Unknown'
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('Minetools lookup error, trying mcsrvstat fallback...', err);
+      }
+
+      // Fallback if minetools didn't yield online status
+      if (!data) {
+        try {
+          const res = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(host)}?_t=${cacheBust}`, {
+            cache: 'no-store'
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json.online) {
+              data = {
+                online: true,
+                players: json.players ? { online: json.players.online, max: json.players.max } : null,
+                latency: null,
+                motd: (json.motd && json.motd.clean && json.motd.clean[0]) || 'Powered by AMP',
+                version: json.version || 'Active'
+              };
+            }
+          }
+        } catch (err) {
+          console.warn('mcsrvstat lookup error', err);
+        }
+      }
+
+      isChecking = false;
+
+      if (data && data.online) {
+        handleOnline(data);
+      } else {
+        handleOffline();
+      }
+
+      lastChecked.textContent = `Last divined: ${new Date().toLocaleTimeString()}`;
+    }
+
+    function setCheckingVisuals() {
+      statState.textContent = 'Probing...';
+    }
+
+    function handleOnline(data) {
+      const wasOffline = !serverIsOnline;
+      serverIsOnline = true;
+
+      orbStage.className = 'orb-stage online';
+      orbIcon.textContent = '🟢';
+      statusBadge.className = 'status-badge online';
+      statusText.textContent = 'Awake & Resonant';
+
+      statState.textContent = 'Awake';
+      statState.style.color = '#34d399';
+
+      statPing.textContent = data.latency ? `${data.latency} ms` : 'Active';
+      if (data.players) {
+        statPlayers.textContent = `${data.players.online} / ${data.players.max}`;
+      } else {
+        statPlayers.textContent = 'Online';
+      }
+
+      if (data.motd) {
+        motdCard.style.display = 'flex';
+        motdText.textContent = data.motd;
+      }
+
+      // Button state
+      if (isAwakening) {
+        isAwakening = false;
+        playArcaneSound('awake');
+        showToast('The Realm has awakened and responded!', '✨');
+      }
+
+      btnWake.disabled = false;
+      btnWake.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
+      btnWake.style.borderColor = 'rgba(52, 211, 153, 0.4)';
+      btnWakeText.textContent = 'Realm is Awake';
+
+      if (wasOffline) {
+        playArcaneSound('awake');
+      }
+    }
+
+    function handleOffline() {
+      serverIsOnline = false;
+
+      if (isAwakening) {
+        // Still chanting the ritual... keep waiting
+        return;
+      }
+
+      orbStage.className = 'orb-stage offline';
+      orbIcon.textContent = '🌑';
+      statusBadge.className = 'status-badge offline';
+      statusText.textContent = 'Dormant in Slumber';
+
+      statState.textContent = 'Asleep';
+      statState.style.color = '#94a3b8';
+      statPing.textContent = '-- ms';
+      statPlayers.textContent = '0 / --';
+      motdCard.style.display = 'none';
+
+      btnWake.disabled = false;
+      btnWake.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 60%, #78350f 100%)';
+      btnWake.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+      btnWakeText.textContent = 'Awaken Realm';
+    }
+
+    // --- Awakening Rite (Wake-on-LAN / Trigger) ---
+    async function triggerAwakening() {
+      if (isAwakening) return;
+      playArcaneSound('spell');
+
+      isAwakening = true;
+      orbStage.className = 'orb-stage awakening';
+      orbIcon.textContent = '⚡';
+      statusBadge.className = 'status-badge awakening';
+      statusText.textContent = 'Casting Awakening Spell...';
+
+      btnWake.disabled = true;
+      btnWakeText.textContent = 'Chanting Rite...';
+
+      showToast('Awakening invocation cast! Listening for realm heartbeat...', '⚡');
+
+      // 1. Dispatch trigger based on selected mode
+      if (config.wakeMode === 'webhook' && config.webhookUrl) {
+        try {
+          await fetch(config.webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mac: config.mac,
+              host: config.host,
+              port: config.port,
+              action: 'wake'
+            })
+          });
+          showToast('Relay webhook invoked successfully!', '📡');
+        } catch (e) {
+          console.warn('Webhook dispatch note:', e);
+        }
+      } else {
+        // Minecraft probe trigger
+        // Sending fresh queries to minetools & mcsrvstat causes their server to open a TCP handshake to port 25565
+        const burstCalls = [
+          fetch(`https://api.minetools.eu/ping/${encodeURIComponent(config.host)}/${encodeURIComponent(config.port)}?_wake=${Date.now()}`, { cache: 'no-store' }),
+          fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(config.host)}?_wake=${Date.now()}`, { cache: 'no-store' })
+        ];
+        Promise.allSettled(burstCalls);
+      }
+
+      // 2. Poll progressively for response (up to 45 seconds)
+      let attempts = 0;
+      const maxAttempts = 15; // 15 * 3s = 45s
+      const pollTimer = setInterval(async () => {
+        attempts++;
+        btnWakeText.textContent = `Awakening... (${attempts * 3}s)`;
+        await checkServerStatus(true);
+
+        if (serverIsOnline) {
+          clearInterval(pollTimer);
+          isAwakening = false;
+        } else if (attempts >= maxAttempts) {
+          clearInterval(pollTimer);
+          isAwakening = false;
+          showToast('Realm still slumbering. Check router port forwarding or relay if hardware is off.', '⚠️');
+          handleOffline();
+        }
+      }, 3000);
+    }
+
+    // --- Configuration Handlers ---
+    function openConfig() {
+      inputHost.value = config.host;
+      inputPort.value = config.port;
+      selectWakeMode.value = config.wakeMode;
+      inputWebhookUrl.value = config.webhookUrl || '';
+      inputMac.value = config.mac || '';
+      updateModalFields();
+      configModal.classList.add('open');
+    }
+
+    function closeConfig() {
+      configModal.classList.remove('open');
+    }
+
+    function updateModalFields() {
+      if (selectWakeMode.value === 'webhook') {
+        webhookSection.style.display = 'block';
+        modeHint.textContent = 'Sends an HTTP request to your local/cloud WoL Relay to dispatch the UDP magic packet.';
+      } else {
+        webhookSection.style.display = 'none';
+        modeHint.textContent = 'Pings the Minecraft port (25565) to awaken AMP or an auto-sleep proxy.';
+      }
+    }
+
+    function saveConfig() {
+      config.host = inputHost.value.trim() || DEFAULTS.host;
+      config.port = parseInt(inputPort.value, 10) || DEFAULTS.port;
+      config.wakeMode = selectWakeMode.value;
+      config.webhookUrl = inputWebhookUrl.value.trim();
+      config.mac = inputMac.value.trim();
+
+      localStorage.setItem('sentinel_config', JSON.stringify(config));
+      displayHost.textContent = config.host;
+      closeConfig();
+      showToast('Grimoire settings inscribed!', '📜');
+      checkServerStatus(true);
+    }
+
+    // Auto-refresh interval
+    function setupAutoRefresh() {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      if (chkAutoRefresh.checked) {
+        autoRefreshTimer = setInterval(() => {
+          checkServerStatus();
+        }, 30000);
+      }
+    }
+
+    // --- Event Listeners ---
+    btnWake.addEventListener('click', () => {
+      if (serverIsOnline) {
+        showToast('The Realm is already awake and operational!', '✨');
+      } else {
+        triggerAwakening();
+      }
+    });
+
+    btnRefresh.addEventListener('click', () => {
+      playArcaneSound('spell');
+      showToast('Divining current status...', '🔮');
+      checkServerStatus(true);
+    });
+
+    orbBtn.addEventListener('click', () => {
+      checkServerStatus(true);
+    });
+
+    btnSettings.addEventListener('click', openConfig);
+    btnDetails.addEventListener('click', openConfig);
+    btnCloseConfig.addEventListener('click', closeConfig);
+    btnSaveConfig.addEventListener('click', saveConfig);
+    selectWakeMode.addEventListener('change', updateModalFields);
+
+    configModal.addEventListener('click', (e) => {
+      if (e.target === configModal) closeConfig();
+    });
+
+    chkAutoRefresh.addEventListener('change', () => {
+      setupAutoRefresh();
+      showToast(chkAutoRefresh.checked ? 'Auto-pulse activated (30s)' : 'Auto-pulse paused');
+    });
+
+    hostPill.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(config.host);
+        showToast('Realm address copied to clipboard!', '📋');
+      } catch (err) {
+        showToast(config.host, '📋');
+      }
+    });
+
+    // --- Initialization ---
+    displayHost.textContent = config.host;
+    setupAutoRefresh();
+    checkServerStatus(true);
+  </script>
+</body>
+</html>
