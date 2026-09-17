@@ -300,6 +300,18 @@
       filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6));
     }
 
+    /* State: Unpolled / Dormant */
+    .orb-stage.unpolled .arcane-orb {
+      background: radial-gradient(circle at 35% 30%, #a78bfa 0%, #6d28d9 50%, #3b0764 100%);
+      box-shadow: 
+        0 0 25px rgba(168, 85, 247, 0.4),
+        inset 0 1px 4px rgba(255, 255, 255, 0.4),
+        inset 0 -4px 10px rgba(0, 0, 0, 0.7);
+    }
+    .orb-stage.unpolled .runic-ring {
+      border-color: rgba(168, 85, 247, 0.35);
+    }
+
     /* Status Text and Details */
     .status-badge {
       display: inline-flex;
@@ -311,7 +323,7 @@
       letter-spacing: 1px;
       padding: 6px 16px;
       border-radius: 999px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       text-transform: uppercase;
     }
     .status-badge.online {
@@ -329,6 +341,11 @@
       border: 1px solid rgba(245, 158, 11, 0.4);
       color: #fbbf24;
     }
+    .status-badge.unpolled {
+      background: rgba(168, 85, 247, 0.12);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      color: #d8b4fe;
+    }
 
     .status-dot {
       width: 8px;
@@ -338,6 +355,23 @@
     .online .status-dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
     .offline .status-dot { background: #64748b; }
     .awakening .status-dot { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+    .unpolled .status-dot { background: #a855f7; box-shadow: 0 0 8px #a855f7; }
+
+    /* Unpolled Notice Banner */
+    .unpolled-notice {
+      background: rgba(168, 85, 247, 0.08);
+      border: 1px dashed rgba(168, 85, 247, 0.3);
+      border-radius: 10px;
+      padding: 8px 14px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: #e9d5ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
 
     /* Telemetry Grid (Players, Ping, Version) */
     .telemetry-grid {
@@ -701,7 +735,7 @@
     </div>
 
     <!-- Arcane Orb Indicator -->
-    <div id="orbStage" class="orb-stage awakening">
+    <div id="orbStage" class="orb-stage unpolled">
       <div class="runic-ring"></div>
       <div class="runic-ring-inner"></div>
       <div class="arcane-orb" id="orbBtn" title="Click to divine server status">
@@ -711,10 +745,16 @@
 
     <!-- Status Text Pill -->
     <div>
-      <div id="statusBadge" class="status-badge awakening">
+      <div id="statusBadge" class="status-badge unpolled">
         <span class="status-dot"></span>
-        <span id="statusText">Divining Realm...</span>
+        <span id="statusText">Status: Not Polled</span>
       </div>
+    </div>
+
+    <!-- Unpolled Explanatory Notice -->
+    <div id="unpolledNotice" class="unpolled-notice">
+      <span>🛡️</span>
+      <span>Status unpolled to avoid waking server &bull; Click <strong>Divine Status</strong> to check</span>
     </div>
 
     <!-- MOTD / Message of the Day -->
@@ -727,15 +767,15 @@
     <div class="telemetry-grid">
       <div class="telemetry-item">
         <div class="telemetry-label">Status</div>
-        <div id="statState" class="telemetry-value">Checking</div>
+        <div id="statState" class="telemetry-value" style="color: #d8b4fe;">Not Polled</div>
       </div>
       <div class="telemetry-item">
         <div class="telemetry-label">Latency / Ping</div>
-        <div id="statPing" class="telemetry-value">-- ms</div>
+        <div id="statPing" class="telemetry-value" style="color: #94a3b8;">Not Polled</div>
       </div>
       <div class="telemetry-item">
         <div class="telemetry-label">Adventurers</div>
-        <div id="statPlayers" class="telemetry-value">-- / --</div>
+        <div id="statPlayers" class="telemetry-value" style="color: #94a3b8;">Not Polled</div>
       </div>
     </div>
 
@@ -768,10 +808,10 @@
 
     <!-- Footer -->
     <footer class="card-footer">
-      <span id="lastChecked">Last divined: Just now</span>
+      <span id="lastChecked">Status: Ready (click Divine Status)</span>
       <label class="auto-refresh-toggle">
-        <input type="checkbox" id="chkAutoRefresh" checked>
-        <span>Auto-pulse (30s)</span>
+        <input type="checkbox" id="chkAutoRefresh">
+        <span>Auto-pulse (off)</span>
       </label>
     </footer>
   </main>
@@ -803,6 +843,14 @@
           <option value="webhook">Custom Webhook / WoL Relay (HTTP Endpoint)</option>
         </select>
         <p class="form-hint" id="modeHint">Pings the Minecraft server list to invoke AMP or sleep proxy auto-wake.</p>
+      </div>
+
+      <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--gold-light); font-size: 13px;">
+          <input type="checkbox" id="chkAutoCheckOnLoad" style="accent-color: var(--gold-primary);">
+          <span>Auto-check status on page load</span>
+        </label>
+        <p class="form-hint">Keep unchecked if you want the page to stay 100% dormant when opened, sending ZERO network packets until you click a button.</p>
       </div>
 
       <div id="webhookSection" style="display: none;">
@@ -855,7 +903,8 @@
       wakeMode: 'minecraft', // 'minecraft' or 'webhook'
       webhookUrl: '',
       mac: '',
-      autoRefresh: true
+      autoRefresh: false, // Default to FALSE to prevent unwanted traffic
+      autoCheckOnLoad: false // Default to FALSE so opening page NEVER wakes the server
     };
 
     let config = { ...DEFAULTS };
@@ -877,6 +926,7 @@
     const orbBtn = document.getElementById('orbBtn');
     const statusBadge = document.getElementById('statusBadge');
     const statusText = document.getElementById('statusText');
+    const unpolledNotice = document.getElementById('unpolledNotice');
     const motdCard = document.getElementById('motdCard');
     const motdText = document.getElementById('motdText');
     const statState = document.getElementById('statState');
@@ -901,6 +951,7 @@
     const inputHost = document.getElementById('inputHost');
     const inputPort = document.getElementById('inputPort');
     const selectWakeMode = document.getElementById('selectWakeMode');
+    const chkAutoCheckOnLoad = document.getElementById('chkAutoCheckOnLoad');
     const webhookSection = document.getElementById('webhookSection');
     const inputWebhookUrl = document.getElementById('inputWebhookUrl');
     const inputMac = document.getElementById('inputMac');
@@ -954,7 +1005,31 @@
       setTimeout(() => toast.classList.remove('show'), 3200);
     }
 
-    // --- Status Checker ---
+    // --- Status Checker (Passive & Safe) ---
+    function handleDormantState() {
+      serverIsOnline = false;
+      orbStage.className = 'orb-stage unpolled';
+      orbIcon.textContent = '🔮';
+      statusBadge.className = 'status-badge unpolled';
+      statusText.textContent = 'Status: Not Polled';
+
+      if (unpolledNotice) unpolledNotice.style.display = 'flex';
+
+      statState.textContent = 'Not Polled';
+      statState.style.color = '#d8b4fe';
+      statPing.textContent = 'Not Polled';
+      statPing.style.color = '#94a3b8';
+      statPlayers.textContent = 'Not Polled';
+      statPlayers.style.color = '#94a3b8';
+      motdCard.style.display = 'none';
+
+      btnWake.disabled = false;
+      btnWake.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 60%, #78350f 100%)';
+      btnWake.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+      btnWakeText.textContent = 'Awaken Realm';
+      lastChecked.textContent = 'Status: Not polled (0 packets sent)';
+    }
+
     async function checkServerStatus(manual = false) {
       if (isChecking && !manual) return;
       isChecking = true;
@@ -965,54 +1040,51 @@
 
       const host = config.host || 'chrismos.viewdns.net';
       const port = config.port || 25565;
-      const cacheBust = Date.now();
 
-      // Primary: minetools ping (fast, accurate latency, clean CORS)
-      // Secondary: mcsrvstat API fallback
       let data = null;
-      let latencyMs = null;
 
+      // Safe Passive Check:
+      // We query mcsrvstat first WITHOUT cache-busting so it uses its internal cache
+      // whenever possible, preventing premature TCP wake-ups on sleeping servers.
       try {
-        const startTime = performance.now();
-        const res = await fetch(`https://api.minetools.eu/ping/${encodeURIComponent(host)}/${encodeURIComponent(port)}?_t=${cacheBust}`, {
-          cache: 'no-store'
+        const res = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(host)}`, {
+          headers: { 'Accept': 'application/json' }
         });
         if (res.ok) {
           const json = await res.json();
-          if (!json.error) {
+          if (json.online) {
             data = {
               online: true,
               players: json.players ? { online: json.players.online, max: json.players.max } : null,
-              latency: json.latency ? Math.round(json.latency) : Math.round(performance.now() - startTime),
-              motd: json.description || 'Powered by AMP',
-              version: json.version ? json.version.name : 'Unknown'
+              latency: (json.debug && json.debug.ping) ? 'Active' : null,
+              motd: (json.motd && json.motd.clean && json.motd.clean[0]) || 'Powered by AMP',
+              version: json.version || 'Active'
             };
           }
         }
       } catch (err) {
-        console.warn('Minetools lookup error, trying mcsrvstat fallback...', err);
+        console.warn('mcsrvstat passive lookup error', err);
       }
 
-      // Fallback if minetools didn't yield online status
-      if (!data) {
+      // Secondary check via minetools only if user explicitly pressed "Divine Status"
+      if (!data && manual) {
         try {
-          const res = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(host)}?_t=${cacheBust}`, {
-            cache: 'no-store'
-          });
+          const startTime = performance.now();
+          const res = await fetch(`https://api.minetools.eu/ping/${encodeURIComponent(host)}/${encodeURIComponent(port)}`);
           if (res.ok) {
             const json = await res.json();
-            if (json.online) {
+            if (!json.error) {
               data = {
                 online: true,
                 players: json.players ? { online: json.players.online, max: json.players.max } : null,
-                latency: null,
-                motd: (json.motd && json.motd.clean && json.motd.clean[0]) || 'Powered by AMP',
-                version: json.version || 'Active'
+                latency: json.latency ? Math.round(json.latency) : Math.round(performance.now() - startTime),
+                motd: json.description || 'Powered by AMP',
+                version: json.version ? json.version.name : 'Active'
               };
             }
           }
         } catch (err) {
-          console.warn('mcsrvstat lookup error', err);
+          console.warn('Minetools lookup note:', err);
         }
       }
 
@@ -1028,27 +1100,34 @@
     }
 
     function setCheckingVisuals() {
-      statState.textContent = 'Probing...';
+      if (unpolledNotice) unpolledNotice.style.display = 'none';
+      statState.textContent = 'Divining...';
+      statState.style.color = '#fbbf24';
+      statPing.textContent = 'Probing...';
+      statPlayers.textContent = 'Probing...';
     }
 
     function handleOnline(data) {
       const wasOffline = !serverIsOnline;
       serverIsOnline = true;
 
+      if (unpolledNotice) unpolledNotice.style.display = 'none';
       orbStage.className = 'orb-stage online';
       orbIcon.textContent = '🟢';
       statusBadge.className = 'status-badge online';
       statusText.textContent = 'Awake & Resonant';
 
-      statState.textContent = 'Awake';
+      statState.textContent = 'Awake (Polled)';
       statState.style.color = '#34d399';
 
       statPing.textContent = data.latency ? `${data.latency} ms` : 'Active';
+      statPing.style.color = 'var(--text-gold)';
       if (data.players) {
         statPlayers.textContent = `${data.players.online} / ${data.players.max}`;
       } else {
         statPlayers.textContent = 'Online';
       }
+      statPlayers.style.color = 'var(--text-gold)';
 
       if (data.motd) {
         motdCard.style.display = 'flex';
@@ -1080,21 +1159,25 @@
         return;
       }
 
+      if (unpolledNotice) unpolledNotice.style.display = 'none';
       orbStage.className = 'orb-stage offline';
       orbIcon.textContent = '🌑';
       statusBadge.className = 'status-badge offline';
-      statusText.textContent = 'Dormant in Slumber';
+      statusText.textContent = 'Offline (Polled)';
 
-      statState.textContent = 'Asleep';
-      statState.style.color = '#94a3b8';
-      statPing.textContent = '-- ms';
+      statState.textContent = 'Offline (Polled)';
+      statState.style.color = '#cbd5e1';
+      statPing.textContent = 'No reply';
+      statPing.style.color = '#64748b';
       statPlayers.textContent = '0 / --';
+      statPlayers.style.color = '#64748b';
       motdCard.style.display = 'none';
 
       btnWake.disabled = false;
       btnWake.style.background = 'linear-gradient(135deg, #d97706 0%, #b45309 60%, #78350f 100%)';
       btnWake.style.borderColor = 'rgba(251, 191, 36, 0.5)';
       btnWakeText.textContent = 'Awaken Realm';
+      lastChecked.textContent = `Polled at: ${new Date().toLocaleTimeString()}`;
     }
 
     // --- Awakening Rite (Wake-on-LAN / Trigger) ---
@@ -1166,6 +1249,7 @@
       inputHost.value = config.host;
       inputPort.value = config.port;
       selectWakeMode.value = config.wakeMode;
+      chkAutoCheckOnLoad.checked = !!config.autoCheckOnLoad;
       inputWebhookUrl.value = config.webhookUrl || '';
       inputMac.value = config.mac || '';
       updateModalFields();
@@ -1179,7 +1263,7 @@
     function updateModalFields() {
       if (selectWakeMode.value === 'webhook') {
         webhookSection.style.display = 'block';
-        modeHint.textContent = 'Sends an HTTP request to your local/cloud WoL Relay to dispatch the UDP magic packet.';
+        modeHint.textContent = 'Sends an HTTP POST to your local/cloud WoL Relay to dispatch the UDP magic packet.';
       } else {
         webhookSection.style.display = 'none';
         modeHint.textContent = 'Pings the Minecraft port (25565) to awaken AMP or an auto-sleep proxy.';
@@ -1190,6 +1274,7 @@
       config.host = inputHost.value.trim() || DEFAULTS.host;
       config.port = parseInt(inputPort.value, 10) || DEFAULTS.port;
       config.wakeMode = selectWakeMode.value;
+      config.autoCheckOnLoad = chkAutoCheckOnLoad.checked;
       config.webhookUrl = inputWebhookUrl.value.trim();
       config.mac = inputMac.value.trim();
 
@@ -1203,10 +1288,14 @@
     // Auto-refresh interval
     function setupAutoRefresh() {
       if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      const span = chkAutoRefresh.nextElementSibling;
       if (chkAutoRefresh.checked) {
+        if (span) span.textContent = 'Auto-pulse (30s)';
         autoRefreshTimer = setInterval(() => {
-          checkServerStatus();
+          checkServerStatus(false);
         }, 30000);
+      } else {
+        if (span) span.textContent = 'Auto-pulse (off)';
       }
     }
 
@@ -1255,8 +1344,15 @@
 
     // --- Initialization ---
     displayHost.textContent = config.host;
+    chkAutoRefresh.checked = !!config.autoRefresh;
     setupAutoRefresh();
-    checkServerStatus(true);
+
+    if (config.autoCheckOnLoad) {
+      checkServerStatus(false);
+    } else {
+      // 100% Dormant: Zero network packets are transmitted until the user clicks a button
+      handleDormantState();
+    }
   </script>
 </body>
 </html>
