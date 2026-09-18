@@ -726,7 +726,8 @@
     <div class="title-wrapper">
       <h1 class="realm-title">Chrismos Realm</h1>
       <div id="hostPill" class="host-pill" title="Click to copy host address">
-        <span id="displayHost">chrismos.viewdns.net</span>
+        <span id="displayHost">chrismos.viewdns.net:19134</span>
+        <span id="editionBadge" style="font-size: 10px; padding: 2px 7px; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 4px; color: #d8b4fe; font-family: var(--font-body); font-weight: 600;">Bedrock UDP</span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -822,7 +823,7 @@
       <div class="modal-title">
         <span>⚙️</span> Arcane Configuration
       </div>
-      <p class="modal-subtitle">Customize realm telemetry, Wake-on-LAN relays, and triggers.</p>
+      <p class="modal-subtitle">Customize realm telemetry, Bedrock ports, and Wake-on-LAN relays.</p>
 
       <div class="form-group">
         <label class="form-label" for="inputHost">Server Hostname</label>
@@ -831,18 +832,36 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="inputPort">Minecraft Port</label>
-        <input id="inputPort" class="form-input" type="number" value="25565" placeholder="25565" />
-        <p class="form-hint">Default Minecraft server port (used by AMP and server ping probes).</p>
+        <label class="form-label" for="selectEdition">Server Edition</label>
+        <select id="selectEdition" class="form-select">
+          <option value="bedrock">Minecraft Bedrock (UDP 19134 / 19135 - Anti-Scanner)</option>
+          <option value="java">Minecraft Java (TCP 25565 - Legacy)</option>
+        </select>
+        <p class="form-hint">Bedrock uses UDP on custom ports 19134/19135 to prevent bot scans from waking the machine.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="inputPort">Server Port</label>
+        <input id="inputPort" class="form-input" type="number" value="19134" placeholder="19134" />
+        <p class="form-hint">Default Bedrock port: 19134 (primary IPv4) or 19135 (secondary/IPv6).</p>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="selectWakeMode">Awakening Method</label>
         <select id="selectWakeMode" class="form-select">
-          <option value="minecraft">Minecraft Handshake Probe (AMP / Sleep Proxy Auto-Wake)</option>
-          <option value="webhook">Custom Webhook / WoL Relay (HTTP Endpoint)</option>
+          <option value="bedrock">Bedrock UDP Burst & Public Probe (Recommended)</option>
+          <option value="bridge">Local Sentinel Bridge (wol_bridge.py) - Direct UDP RakNet</option>
+          <option value="webhook">Custom Webhook / External WoL Relay</option>
         </select>
-        <p class="form-hint" id="modeHint">Pings the Minecraft server list to invoke AMP or sleep proxy auto-wake.</p>
+        <p class="form-hint" id="modeHint">Dispatches Bedrock UDP connection packets to awaken AMP or your server.</p>
+      </div>
+
+      <div id="bridgeSection" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="inputBridgeUrl">Local Bridge URL (wol_bridge.py)</label>
+          <input id="inputBridgeUrl" class="form-input" type="url" value="http://localhost:8088" placeholder="http://localhost:8088" />
+          <p class="form-hint">When running <code>python wol_bridge.py</code> locally, enables direct RakNet UDP telemetry and wake bursts without browser limits.</p>
+        </div>
       </div>
 
       <div class="form-group">
@@ -859,27 +878,25 @@
           <input id="inputWebhookUrl" class="form-input" type="url" placeholder="http://192.168.1.100:8080/wake or Home Assistant URL" />
           <p class="form-hint">URL of a local router, Home Assistant, or small bridge script on your LAN that dispatches the raw UDP magic packet.</p>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label class="form-label" for="inputMac">Server MAC Address (Optional)</label>
-          <input id="inputMac" class="form-input" type="text" placeholder="AA:BB:CC:DD:EE:FF" />
-          <p class="form-hint">Physical network card MAC address of your target server.</p>
-        </div>
+      <div class="form-group">
+        <label class="form-label" for="inputMac">Server MAC Address (Optional)</label>
+        <input id="inputMac" class="form-input" type="text" placeholder="AA:BB:CC:DD:EE:FF" />
+        <p class="form-hint">Physical network card MAC address of your target server (for hardware WoL magic packets).</p>
       </div>
 
       <!-- Grimoire / Architectural Lore -->
       <div class="lore-box">
-        <h4>📜 Grimoire of Awakening: Crucial Details</h4>
-        <p><strong>1. Why web browsers can't send raw UDP WoL packets:</strong><br>
-        Web browsers are strictly sandboxed and cannot transmit raw Layer 2 UDP broadcast packets (port 9) over a local network or WAN.</p>
+        <h4>📜 Grimoire of Awakening: Bedrock Setup</h4>
+        <p><strong>1. Why moving to ports 19134/19135 fixed unexpected wake-ups:</strong><br>
+        Standard Minecraft ports (25565 for Java, 19132 for Bedrock) are scanned thousands of times daily by automated bots (Shodan, Censys, masscan). Because sleep proxies wake up on any inbound connection, internet crawlers were constantly waking your server! Moving Bedrock to port 19134/19135 successfully shields it from public port scanners.</p>
         
-        <p><strong>2. Why wake already works for Minecraft:</strong><br>
-        Your server is reported as <code>Powered by AMP</code> (CubeCoders AMP). AMP has an <em>Application Sleep</em> feature: when players disconnect, the heavy server hibernates and AMP listens on port 25565. As soon as a client pings or connects, AMP awakens the game! Clicking "Awaken Realm" sends immediate Minecraft Server List Ping (SLP) probes to trigger this.</p>
+        <p><strong>2. Bedrock Status Checking:</strong><br>
+        Bedrock uses UDP (RakNet). Web browsers cannot send raw UDP packets directly. If public APIs cannot reach port 19134, run <code>python wol_bridge.py</code> in a terminal — it performs direct UDP RakNet pings and reports live status instantly!</p>
 
-        <p><strong>3. If the host PC is completely powered off (ACPI S5):</strong><br>
-        If the entire physical computer is shut down, standard routers drop broadcast packets from the Internet. You will need either:
-        • A port forward on your router directing UDP port 9 to your broadcast IP (or ARP binding), or<br>
-        • A tiny WoL bridge script (or Home Assistant/router) inside the LAN.</p>
+        <p><strong>3. Awakening Rite:</strong><br>
+        Clicking "Awaken Realm" dispatches UDP wake packets to port 19134 to trigger AMP or sleep proxies.</p>
       </div>
 
       <div class="modal-actions">
@@ -899,8 +916,10 @@
     // --- Arcane Configuration & State ---
     const DEFAULTS = {
       host: 'chrismos.viewdns.net',
-      port: 25565,
-      wakeMode: 'minecraft', // 'minecraft' or 'webhook'
+      port: 19134,
+      serverType: 'bedrock', // 'bedrock' or 'java'
+      wakeMode: 'bedrock',   // 'bedrock', 'bridge', or 'webhook'
+      bridgeUrl: 'http://localhost:8088',
       webhookUrl: '',
       mac: '',
       autoRefresh: false, // Default to FALSE to prevent unwanted traffic
@@ -933,6 +952,7 @@
     const statPing = document.getElementById('statPing');
     const statPlayers = document.getElementById('statPlayers');
     const displayHost = document.getElementById('displayHost');
+    const editionBadge = document.getElementById('editionBadge');
     const hostPill = document.getElementById('hostPill');
     const btnWake = document.getElementById('btnWake');
     const btnWakeText = document.getElementById('btnWakeText');
@@ -949,8 +969,11 @@
     const btnCloseConfig = document.getElementById('btnCloseConfig');
     const btnSaveConfig = document.getElementById('btnSaveConfig');
     const inputHost = document.getElementById('inputHost');
+    const selectEdition = document.getElementById('selectEdition');
     const inputPort = document.getElementById('inputPort');
     const selectWakeMode = document.getElementById('selectWakeMode');
+    const bridgeSection = document.getElementById('bridgeSection');
+    const inputBridgeUrl = document.getElementById('inputBridgeUrl');
     const chkAutoCheckOnLoad = document.getElementById('chkAutoCheckOnLoad');
     const webhookSection = document.getElementById('webhookSection');
     const inputWebhookUrl = document.getElementById('inputWebhookUrl');
@@ -1039,52 +1062,95 @@
       }
 
       const host = config.host || 'chrismos.viewdns.net';
-      const port = config.port || 25565;
+      const port = config.port || 19134;
 
       let data = null;
 
-      // Safe Passive Check:
-      // We query mcsrvstat first WITHOUT cache-busting so it uses its internal cache
-      // whenever possible, preventing premature TCP wake-ups on sleeping servers.
-      try {
-        const res = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(host)}`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.online) {
-            data = {
-              online: true,
-              players: json.players ? { online: json.players.online, max: json.players.max } : null,
-              latency: (json.debug && json.debug.ping) ? 'Active' : null,
-              motd: (json.motd && json.motd.clean && json.motd.clean[0]) || 'Powered by AMP',
-              version: json.version || 'Active'
-            };
+      // 1. First: Try Local Sentinel Bridge (wol_bridge.py) if on file:// or HTTP, or if bridge uses HTTPS
+      const bridgeUrl = config.bridgeUrl || 'http://localhost:8088';
+      const canUseBridge = window.location.protocol !== 'https:' || bridgeUrl.startsWith('https://');
+      if (canUseBridge) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 1800);
+          const bridgeRes = await fetch(`${bridgeUrl}/status?host=${encodeURIComponent(host)}&port=${encodeURIComponent(port)}&type=${encodeURIComponent(config.serverType || 'bedrock')}`, {
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (bridgeRes.ok) {
+            const bridgeJson = await bridgeRes.json();
+            if (bridgeJson.online) {
+              data = {
+                online: true,
+                players: bridgeJson.players,
+                latency: bridgeJson.latency_ms ? Math.round(bridgeJson.latency_ms) : 'Active',
+                motd: bridgeJson.motd || 'Bedrock Realm Active',
+                version: bridgeJson.version || 'Bedrock 19134'
+              };
+            }
           }
+        } catch (e) {
+          // Bridge unreachable, fall back to public APIs
         }
-      } catch (err) {
-        console.warn('mcsrvstat passive lookup error', err);
       }
 
-      // Secondary check via minetools only if user explicitly pressed "Divine Status"
-      if (!data && manual) {
+      // 2. Fallback: Public Bedrock API checks
+      if (!data && config.serverType === 'bedrock') {
         try {
-          const startTime = performance.now();
-          const res = await fetch(`https://api.minetools.eu/ping/${encodeURIComponent(host)}/${encodeURIComponent(port)}`);
+          const res = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${encodeURIComponent(host)}:${encodeURIComponent(port)}`);
           if (res.ok) {
             const json = await res.json();
-            if (!json.error) {
+            if (json.online) {
               data = {
                 online: true,
                 players: json.players ? { online: json.players.online, max: json.players.max } : null,
-                latency: json.latency ? Math.round(json.latency) : Math.round(performance.now() - startTime),
-                motd: json.description || 'Powered by AMP',
-                version: json.version ? json.version.name : 'Active'
+                latency: 'Active',
+                motd: (json.motd && json.motd.clean) || 'Bedrock Realm',
+                version: json.version ? json.version.name : 'Bedrock'
               };
             }
           }
         } catch (err) {
-          console.warn('Minetools lookup note:', err);
+          console.warn('mcstatus.io lookup note:', err);
+        }
+
+        if (!data) {
+          try {
+            const res = await fetch(`https://api.mcsrvstat.us/bedrock/3/${encodeURIComponent(host)}:${encodeURIComponent(port)}`);
+            if (res.ok) {
+              const json = await res.json();
+              if (json.online) {
+                data = {
+                  online: true,
+                  players: json.players ? { online: json.players.online, max: json.players.max } : null,
+                  latency: 'Active',
+                  motd: (json.motd && json.motd.clean && json.motd.clean[0]) || 'Bedrock Realm',
+                  version: json.version || 'Bedrock'
+                };
+              }
+            }
+          } catch (err) {
+            console.warn('mcsrvstat lookup note:', err);
+          }
+        }
+      } else if (!data && config.serverType === 'java') {
+        // Legacy Java TCP check
+        try {
+          const res = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(host)}:${encodeURIComponent(port)}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.online) {
+              data = {
+                online: true,
+                players: json.players ? { online: json.players.online, max: json.players.max } : null,
+                latency: 'Active',
+                motd: (json.motd && json.motd.clean && json.motd.clean[0]) || 'Java Realm',
+                version: json.version || 'Java'
+              };
+            }
+          }
+        } catch (err) {
+          console.warn('Java check note:', err);
         }
       }
 
@@ -1120,7 +1186,7 @@
       statState.textContent = 'Awake (Polled)';
       statState.style.color = '#34d399';
 
-      statPing.textContent = data.latency ? `${data.latency} ms` : 'Active';
+      statPing.textContent = (typeof data.latency === 'number') ? `${data.latency} ms` : 'Active';
       statPing.style.color = 'var(--text-gold)';
       if (data.players) {
         statPlayers.textContent = `${data.players.online} / ${data.players.max}`;
@@ -1138,7 +1204,7 @@
       if (isAwakening) {
         isAwakening = false;
         playArcaneSound('awake');
-        showToast('The Realm has awakened and responded!', '✨');
+        showToast('The Bedrock Realm has awakened and responded!', '✨');
       }
 
       btnWake.disabled = false;
@@ -1163,9 +1229,9 @@
       orbStage.className = 'orb-stage offline';
       orbIcon.textContent = '🌑';
       statusBadge.className = 'status-badge offline';
-      statusText.textContent = 'Offline (Polled)';
+      statusText.textContent = 'Offline / Shielded';
 
-      statState.textContent = 'Offline (Polled)';
+      statState.textContent = 'Offline';
       statState.style.color = '#cbd5e1';
       statPing.textContent = 'No reply';
       statPing.style.color = '#64748b';
@@ -1180,7 +1246,7 @@
       lastChecked.textContent = `Polled at: ${new Date().toLocaleTimeString()}`;
     }
 
-    // --- Awakening Rite (Wake-on-LAN / Trigger) ---
+    // --- Awakening Rite (Wake-on-LAN / Bedrock Trigger) ---
     async function triggerAwakening() {
       if (isAwakening) return;
       playArcaneSound('spell');
@@ -1196,7 +1262,27 @@
 
       showToast('Awakening invocation cast! Listening for realm heartbeat...', '⚡');
 
-      // 1. Dispatch trigger based on selected mode
+      // 1. Dispatch via Local Sentinel Bridge if on file:// or HTTP, or if bridge uses HTTPS
+      const bridgeUrl = config.bridgeUrl || 'http://localhost:8088';
+      const canUseBridge = window.location.protocol !== 'https:' || bridgeUrl.startsWith('https://');
+      if (canUseBridge) {
+        try {
+          await fetch(`${bridgeUrl}/wake`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mac: config.mac,
+              host: config.host,
+              port: config.port
+            })
+          });
+          showToast('Bedrock UDP wake burst & WoL dispatched via local bridge!', '📡');
+        } catch (e) {
+          // Local bridge not running, continue with other triggers
+        }
+      }
+
+      // 2. Dispatch via Custom Webhook if configured
       if (config.wakeMode === 'webhook' && config.webhookUrl) {
         try {
           await fetch(config.webhookUrl, {
@@ -1214,17 +1300,17 @@
         } catch (e) {
           console.warn('Webhook dispatch note:', e);
         }
-      } else {
-        // Minecraft probe trigger
-        // Sending fresh queries to minetools & mcsrvstat causes their server to open a TCP handshake to port 25565
-        const burstCalls = [
-          fetch(`https://api.minetools.eu/ping/${encodeURIComponent(config.host)}/${encodeURIComponent(config.port)}?_wake=${Date.now()}`, { cache: 'no-store' }),
-          fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(config.host)}?_wake=${Date.now()}`, { cache: 'no-store' })
-        ];
-        Promise.allSettled(burstCalls);
       }
 
-      // 2. Poll progressively for response (up to 45 seconds)
+      // 3. Fallback: Public Bedrock probes to ports 19134 & 19135
+      const burstCalls = [
+        fetch(`https://api.mcstatus.io/v2/status/bedrock/${encodeURIComponent(config.host)}:19134?_wake=${Date.now()}`),
+        fetch(`https://api.mcstatus.io/v2/status/bedrock/${encodeURIComponent(config.host)}:19135?_wake=${Date.now()}`),
+        fetch(`https://api.mcsrvstat.us/bedrock/3/${encodeURIComponent(config.host)}:19134?_wake=${Date.now()}`)
+      ];
+      Promise.allSettled(burstCalls);
+
+      // 4. Poll progressively for response (up to 45 seconds)
       let attempts = 0;
       const maxAttempts = 15; // 15 * 3s = 45s
       const pollTimer = setInterval(async () => {
@@ -1238,7 +1324,7 @@
         } else if (attempts >= maxAttempts) {
           clearInterval(pollTimer);
           isAwakening = false;
-          showToast('Realm still slumbering. Check router port forwarding or relay if hardware is off.', '⚠️');
+          showToast('Realm still slumbering. Check router port forwarding (UDP 19134) or start wol_bridge.py.', '⚠️');
           handleOffline();
         }
       }, 3000);
@@ -1247,8 +1333,10 @@
     // --- Configuration Handlers ---
     function openConfig() {
       inputHost.value = config.host;
+      selectEdition.value = config.serverType || 'bedrock';
       inputPort.value = config.port;
       selectWakeMode.value = config.wakeMode;
+      inputBridgeUrl.value = config.bridgeUrl || 'http://localhost:8088';
       chkAutoCheckOnLoad.checked = !!config.autoCheckOnLoad;
       inputWebhookUrl.value = config.webhookUrl || '';
       inputMac.value = config.mac || '';
@@ -1263,26 +1351,45 @@
     function updateModalFields() {
       if (selectWakeMode.value === 'webhook') {
         webhookSection.style.display = 'block';
+        bridgeSection.style.display = 'none';
         modeHint.textContent = 'Sends an HTTP POST to your local/cloud WoL Relay to dispatch the UDP magic packet.';
-      } else {
+      } else if (selectWakeMode.value === 'bridge') {
+        bridgeSection.style.display = 'block';
         webhookSection.style.display = 'none';
-        modeHint.textContent = 'Pings the Minecraft port (25565) to awaken AMP or an auto-sleep proxy.';
+        modeHint.textContent = 'Communicates with wol_bridge.py on your machine to send raw UDP Bedrock pings & WoL magic packets.';
+      } else {
+        bridgeSection.style.display = 'none';
+        webhookSection.style.display = 'none';
+        modeHint.textContent = 'Dispatches Bedrock UDP packets (via bridge or public ping) to awaken AMP or your server.';
       }
     }
 
     function saveConfig() {
       config.host = inputHost.value.trim() || DEFAULTS.host;
-      config.port = parseInt(inputPort.value, 10) || DEFAULTS.port;
+      config.serverType = selectEdition.value;
+      config.port = parseInt(inputPort.value, 10) || (config.serverType === 'bedrock' ? 19134 : 25565);
       config.wakeMode = selectWakeMode.value;
+      config.bridgeUrl = inputBridgeUrl.value.trim() || DEFAULTS.bridgeUrl;
       config.autoCheckOnLoad = chkAutoCheckOnLoad.checked;
       config.webhookUrl = inputWebhookUrl.value.trim();
       config.mac = inputMac.value.trim();
 
-      localStorage.setItem('sentinel_config', JSON.stringify(config));
-      displayHost.textContent = config.host;
+      try {
+        localStorage.setItem('sentinel_config', JSON.stringify(config));
+      } catch (e) {
+        console.warn('Could not save to localStorage:', e);
+      }
+      updateHostDisplay();
       closeConfig();
       showToast('Grimoire settings inscribed!', '📜');
       checkServerStatus(true);
+    }
+
+    function updateHostDisplay() {
+      displayHost.textContent = `${config.host}:${config.port}`;
+      if (editionBadge) {
+        editionBadge.textContent = config.serverType === 'bedrock' ? 'Bedrock UDP' : 'Java TCP';
+      }
     }
 
     // Auto-refresh interval
@@ -1323,6 +1430,13 @@
     btnCloseConfig.addEventListener('click', closeConfig);
     btnSaveConfig.addEventListener('click', saveConfig);
     selectWakeMode.addEventListener('change', updateModalFields);
+    selectEdition.addEventListener('change', () => {
+      if (selectEdition.value === 'bedrock' && inputPort.value === '25565') {
+        inputPort.value = '19134';
+      } else if (selectEdition.value === 'java' && inputPort.value === '19134') {
+        inputPort.value = '25565';
+      }
+    });
 
     configModal.addEventListener('click', (e) => {
       if (e.target === configModal) closeConfig();
@@ -1335,15 +1449,15 @@
 
     hostPill.addEventListener('click', async () => {
       try {
-        await navigator.clipboard.writeText(config.host);
+        await navigator.clipboard.writeText(`${config.host}:${config.port}`);
         showToast('Realm address copied to clipboard!', '📋');
       } catch (err) {
-        showToast(config.host, '📋');
+        showToast(`${config.host}:${config.port}`, '📋');
       }
     });
 
     // --- Initialization ---
-    displayHost.textContent = config.host;
+    updateHostDisplay();
     chkAutoRefresh.checked = !!config.autoRefresh;
     setupAutoRefresh();
 
